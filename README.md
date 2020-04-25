@@ -1,1 +1,0 @@
-# stFI_geometrical
