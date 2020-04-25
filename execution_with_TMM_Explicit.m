@@ -1,6 +1,5 @@
 function [LastVal] ...
     = execution_with_TMM_Explicit(TMM_Explicit,InitVal,number_of_steps)
-
 %disp('checkpoint alpha')
 
 variables_f_then_e=[InitVal.f; InitVal.e];

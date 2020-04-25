@@ -1,11 +1,15 @@
 clear;
-% Numbers like PNum, FNum, ... should be put together as an structure.
-% e.g. MeshNums.FNum=hoge, HodgeGridNum.PNum=hoge, HodgeGridNum.OmegaNum=hoge.
-% then it is easy to pass on as an arguement to each functions
+
+
+global EPSILON
+global dim
+
+EPSILON=10^(-7);
+
+dim=2; %number of spatial dimensions
 
 % future tasks; Modify Parameters_Mesh into function with arguements such
 % as (Size_X,Size_Y,...)
-
 Parameters_Mesh
 [sC,sG,denominator,edgevec,first_p,tilde_node_position,MeshNum,MeshParam] ...
     = GenerateMesh_triangular(denominator_obi,MeshParam);
@@ -39,10 +43,14 @@ kappatimesz=kappa.*impedance_inv_p;
 [subG_bin,subG_sizes,allIdx_stFI,denominator,att] ...
     = Divide_into_induced_subgraphs(sC,sG,denominator,MeshNum);
 
+% task: allocate TMM beforehand to reduce overheads
 [TMM_Explicit] ...
     = Obtain_TMM_Explicit(kappatimesz,sC,denominator,allIdx_stFI,subG_bin,subG_sizes,att,first_p,MeshNum);
 
 number_of_steps=100
+
+MessageStr = ['Executing Calculation: from ct = 0 to ct = ',num2str(cdt * number_of_steps)];
+disp(MessageStr)
 
 [variables_f_then_e] ...
     =execution_with_TMM_Explicit(TMM_Explicit,InitVal,number_of_steps);

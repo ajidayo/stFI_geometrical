@@ -1,12 +1,5 @@
 %clear;
 % PARAMETERS
-global EPSILON
-global dim
-
-EPSILON=10^(-7);
-
-dim=2; %number of spatial dimensions
-
 denominator_obi=2;
 
 % Size_X=100;
