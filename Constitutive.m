@@ -1,8 +1,9 @@
 function [kappa,b_area,MeshNum] ...
-    =Constitutive(cdt,sC,sG,denominator,edgevec,first_p,tilde_node_position,MeshNum)
+    =Constitutive(cdt,sC,sG,denominator,edgevec,first_pIdx,MeshNum)
+disp('Constitutive: CALLED')
 
 global EPSILON
-global dim
+global DIM
 
 denominator_face=denominator.f;
 denominator_edge=denominator.e;
@@ -11,8 +12,8 @@ denominator_node=denominator.n;
 edge_vector=edgevec.prim;
 tilde_edge_vector=edgevec.dual;
 
-first_p_for_f=first_p.f;
-first_p_for_e=first_p.e;
+first_pIdx_f=first_pIdx.f;
+first_pIdx_e=first_pIdx.e;
 
 exception=0;% dummy
 %% Parameters
@@ -23,12 +24,12 @@ endpoints_tilde_e=zeros(2,1);
 error=zeros(2,1);
 e1c=zeros(2,1);
 e2c=zeros(2,1);
-vec_e1c=zeros(2,dim);vec_e2c=zeros(2,dim); % (n1 or n2,xy)
-vec_e_target=zeros(dim,1); %(xy)
-direction_vector=zeros(dim,1); %(xy)
-edge1_vector=zeros(dim,1);
-edge2_vector=zeros(dim,1);
-edge1plus2_vector=zeros(dim,1);
+vec_e1c=zeros(2,DIM);vec_e2c=zeros(2,DIM); % (n1 or n2,xy)
+vec_e_target=zeros(DIM,1); %(xy)
+direction_vector=zeros(DIM,1); %(xy)
+edge1_vector=zeros(DIM,1);
+edge2_vector=zeros(DIM,1);
+edge1plus2_vector=zeros(DIM,1);
 
 first_stn_for_n=zeros(MeshNum.N,1);
 %z=zeros(MeshNum.P,1);
@@ -46,7 +47,7 @@ end
 stNNum=stn-1;
 denominator.stN=stNNum;
 
-stnode_delta_vector=sparse(stNNum,dim);
+stnode_delta_vector=sparse(stNNum,DIM);
 
 %% calculate kappa for boundary edges
 disp('calculating kappa for boundary edges')
@@ -73,7 +74,7 @@ for e_target=1:MeshNum.E
     if exception==1 %exception (corner)
     else %boundary_attribute(e_target) .eqv. .TRUE.%non-exceptional boundary edge
         denominator_e_target=denominator_edge(e_target);
-        p_target=first_p_for_e(e_target);
+        p_target=first_pIdx_e(e_target);
         
         % find endpoints n1,n2 of e from sG
         sG_e_target=sG(e_target,:);
@@ -139,27 +140,27 @@ for e_target=1:MeshNum.E
         % end  find e2c(1), e2c(2)
 
         % compute direction vectors
-        for xy=1:dim
+        for xy=1:DIM
             for j=1:2
                 vec_e1c(j,xy)=edge_vector(e1c(j),xy);
                 vec_e2c(j,xy)=edge_vector(e2c(j),xy);
             end
         end
-        for xy=1:dim
+        for xy=1:DIM
             vec_e_target(xy)=edge_vector(e_target,xy);
         end
-        for xy=1:dim
+        for xy=1:DIM
             for j=1:2
                 vec_e1c(j,xy)=vec_e1c(j,xy)/sqrt( vec_e1c(j,1)^2 + vec_e1c(j,2)^2 );
                 vec_e2c(j,xy)=vec_e2c(j,xy)/sqrt( vec_e2c(j,2)^2 + vec_e2c(j,1)^2 );
             end
         end
-        for xy=1:dim
+        for xy=1:DIM
             vec_e_target(xy)=vec_e_target(xy)/sqrt( vec_e_target(1)^2 + vec_e_target(2)^2 );
         end
         % correct directions of vec_e1c, vec_e2c: the direction is the same
         % as the direction of tilde_edge_vector.(the direction of g, or tilde e)
-        for xy=1:dim
+        for xy=1:DIM
             for j=1:2
                 vec_e1c(j,xy)=vec_e1c(j,xy)...
                     *sign(vec_e1c(j,1)*tilde_edge_vector(e_target,1)+vec_e1c(j,2)*tilde_edge_vector(e_target,2));
@@ -171,25 +172,25 @@ for e_target=1:MeshNum.E
 
         % check that the two edges are parallel: if parallel then the direction of the two edges is the shift direction for boundary nodes
         error(1)=0.0;
-        for xy=1:dim
+        for xy=1:DIM
             error(1)=error(1)+(vec_e1c(1,xy)-vec_e2c(1,xy))^2;
         end
         error(2)=0.0;
-        for xy=1:dim
+        for xy=1:DIM
             error(2)=error(2)+(vec_e1c(2,xy)-vec_e2c(2,xy))^2;
         end
         if error(1)<EPSILON
-            for xy =1:dim
+            for xy =1:DIM
                 direction_vector(xy)=vec_e1c(1,xy);
             end
         end
         if error(2)<EPSILON
-            for xy =1:dim
+            for xy =1:DIM
                 direction_vector(xy)=vec_e1c(2,xy);
             end
         end
         costheta=0.0;
-        for xy=1:dim
+        for xy=1:DIM
             costheta=costheta+direction_vector(xy)*vec_e_target(xy);
         end
         sintheta=sqrt(1-costheta^2);
@@ -244,11 +245,11 @@ for e_target=1:MeshNum.E
        
             delta_area=difference_time/kappa(p_target); % N.B. delta_area has sign
             delta_position=delta_area/(length_e_target*sintheta);          
-            for xy=1:dim
+            for xy=1:DIM
                 stnode_delta_vector(stn_target_1,xy)=...
                     stnode_delta_vector(stn_target_1-1,xy)+delta_position*direction_vector(xy);
             end
-            for xy=1:dim
+            for xy=1:DIM
                 stnode_delta_vector(stn_target_2,xy)=...
                     stnode_delta_vector(stn_target_2-1,xy)+delta_position*direction_vector(xy);
             end
@@ -280,7 +281,7 @@ for e_target=1:MeshNum.E
     if exception==1 %non-boundary exception (non-orthogonal)
     else %non-exceptional, non-boundary
         denominator_e_target=denominator_edge(e_target);
-        p_target=first_p_for_e(e_target);
+        p_target=first_pIdx_e(e_target);
             
         
         % find endpoints n1,n2 of e from sG
@@ -305,12 +306,12 @@ for e_target=1:MeshNum.E
         
             % calculate area1 for n1 side
             norm=0.0;
-            for xy=1:dim
+            for xy=1:DIM
                 direction_vector(xy)=edge_vector(e_target,xy);
                 norm=norm+direction_vector(xy)^2;
             end
             norm=sqrt(norm);
-            for xy=1:dim
+            for xy=1:DIM
                 direction_vector(xy) = direction_vector(xy)/norm;
                 direction_vector(xy) = sG(e_target,endpoints_e(1))*direction_vector(xy);
             end
@@ -319,7 +320,7 @@ for e_target=1:MeshNum.E
             for j=1:dn1/denominator_e_target
                 length_lower_edge=0.0;
                 length_upper_edge=0.0;
-                for xy=1:dim
+                for xy=1:DIM
                     length_lower_edge = length_lower_edge...
                         + stnode_delta_vector(stn_target_1+j-1,xy)*direction_vector(xy);
                     length_upper_edge = length_upper_edge...
@@ -331,12 +332,12 @@ for e_target=1:MeshNum.E
             
             % calculate area2 for n2 side
             norm=0.0;
-            for xy=1:dim
+            for xy=1:DIM
                 direction_vector(xy)=edge_vector(e_target,xy);
                 norm=norm+direction_vector(xy)^2;
             end
             norm=sqrt(norm);
-            for xy=1:dim
+            for xy=1:DIM
                 direction_vector(xy)=direction_vector(xy)/norm;
                 direction_vector(xy) = sG(e_target,endpoints_e(2))*direction_vector(xy);
             end
@@ -344,7 +345,7 @@ for e_target=1:MeshNum.E
             for j=1:dn2/denominator_e_target
                 length_lower_edge=0.0;
                 length_upper_edge=0.0;
-                for xy=1:dim
+                for xy=1:DIM
                     length_lower_edge = length_lower_edge...
                         + stnode_delta_vector(stn_target_2+j-1,xy)*direction_vector(xy);
                     length_upper_edge = length_upper_edge...
@@ -380,7 +381,7 @@ for f_target=1:MeshNum.F
     if exception==1
     else
         denominator_f_target=denominator_face(f_target);
-        p_target=first_p_for_f(f_target)-1;
+        p_target=first_pIdx_f(f_target)-1;
 
         for i=0:denominator_f_target-1
             p_target=p_target+1;
@@ -388,7 +389,7 @@ for f_target=1:MeshNum.F
             
             % find edge1
             edge1=col_sC_f_target(1);
-            for xy = 1:dim
+            for xy = 1:DIM
                 edge1_vector(xy)=edge_vector(edge1,xy);
             end
             % end find edge1
@@ -411,7 +412,7 @@ for f_target=1:MeshNum.F
             stn_node2=first_stn_for_n(node2)+i*denominator_node(node2)/denominator_f_target;
             
             % add delta to edge1_vector
-            for xy=1:dim
+            for xy=1:DIM
                 edge1_vector(xy)=edge1_vector(xy)...
                     +sG(edge1,node1)*stnode_delta_vector(stn_node1,xy)...
                     +sG(edge1,node2)*stnode_delta_vector(stn_node2,xy);
@@ -430,7 +431,7 @@ for f_target=1:MeshNum.F
                     e=row_sG_node1(ee);
                     if e~=edge1 && sC(f_target,e)~=0 % && sG(e,node1)~=0 
                         edge2=e;
-                        for xy = 1:dim
+                        for xy = 1:DIM
                             edge2_vector(xy)=edge_vector(edge2,xy);
                         end
                         break;
@@ -458,7 +459,7 @@ for f_target=1:MeshNum.F
                 stn_node2=first_stn_for_n(node2)+i*denominator_node(node2)/denominator_f_target;
                 
                 % add delta to edge2_vector
-                for xy=1:dim
+                for xy=1:DIM
                     edge2_vector(xy)=edge2_vector(xy)...
                         +sG(edge2,node1)*stnode_delta_vector(stn_node1,xy)...
                         +sG(edge2,node2)*stnode_delta_vector(stn_node2,xy);
@@ -466,12 +467,12 @@ for f_target=1:MeshNum.F
                 % end add delta to edge2_vector
                 
                 % correct the direction of edge2_vector
-                for xy=1:dim
+                for xy=1:DIM
                     edge2_vector(xy)=sG(edge2,node2)*edge2_vector(xy);
                 end
                 % end correct the direction of edge2_vector
                 
-                for xy=1:dim
+                for xy=1:DIM
                     edge1plus2_vector(xy)=edge1_vector(xy)+edge2_vector(xy);
                 end
                 
@@ -491,7 +492,7 @@ for f_target=1:MeshNum.F
                 
                 
                 stn_node1=stn_node2;
-                for xy=1:dim
+                for xy=1:DIM
                     edge1_vector(xy)=edge1plus2_vector(xy);
                 end
             end % while for the boundary edges of f_target
@@ -502,8 +503,8 @@ for f_target=1:MeshNum.F
             %kappa(p_target) = sign(stdistance(p_target))*kappa(p_target);
         end %loop for i
         %stdistance(first_p_for_f(f_target)+denominator_f_target)=stdistance(first_p_for_f(f_target));
-        kappa(first_p_for_f(f_target)+denominator_f_target)=kappa(first_p_for_f(f_target));
-        b_area(f_target)=(cdt/denominator_f_target)/kappa(first_p_for_f(f_target));
+        kappa(first_pIdx_f(f_target)+denominator_f_target)=kappa(first_pIdx_f(f_target));
+        b_area(f_target)=(cdt/denominator_f_target)/kappa(first_pIdx_f(f_target));
     end % if for exceptions
 end % loop for f_target
 
@@ -514,6 +515,6 @@ end % loop for f_target
 
 %% STOP
 
-disp('Constitutive:END')
+disp('Constitutive:STOPPED')
 
 end

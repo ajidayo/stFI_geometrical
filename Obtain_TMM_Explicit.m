@@ -1,5 +1,7 @@
 function [TMM_Explicit] ...
-    = Obtain_TMM_Explicit(kappatimesz,sC,denominator,allIdx_stFI,subG_bin,subG_sizes,att,first_p,MeshNum)
+    = Obtain_TMM_Explicit(kappatimesZinv,sC,denominator,allIdx_stFI,subG_bin,subG_sizes,att,first_pIdx,MeshNum)
+
+disp('Obtain_TMM_Explicit: CALLED')
 
 denominator_SG=denominator.SG;
 denominator_face=denominator.f;
@@ -19,8 +21,8 @@ att_bound_SG_e=att.bound_SG_e;
 att_adj_bounde_e=att.adj_bounde_e;
 att_bound_e=att.bound_e;
 
-first_p_for_f=first_p.f;
-first_p_for_e=first_p.e;
+first_pIdx_f=first_pIdx.f;
+first_pIdx_e=first_pIdx.e;
 
 
 % this unit generates the explicit time-marching matrix combining the
@@ -83,7 +85,7 @@ for ee=1:size(allIdx_bound_SG_e,1) %SGboundary edges
                     p_is_init=false;
                 end
                 FItask_tgt=offset_FItask(SG_tgt)+i;
-                p_s=first_p_for_f(f)+i-1;
+                p_s=first_pIdx_f(f)+i-1;
                 [s(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
                     = semi_add_dep_edge(p_s,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,p_is_init);               
                 t(edgecounter)=FItask_tgt;
@@ -123,10 +125,10 @@ for ff=1:size(allIdx_stFI_f,1)
        else
            p_s_is_init=false;
        end
-       p_s=first_p_for_f(f)+i-1;
+       p_s=first_pIdx_f(f)+i-1;
        [s(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
            = semi_add_dep_edge(p_s,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,p_s_is_init);
-       p_t=first_p_for_f(f)+i;
+       p_t=first_pIdx_f(f)+i;
        [t(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
            = semi_add_dep_edge(p_t,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,false      );
        D(omega,p_s)=-1;
@@ -137,7 +139,7 @@ for ff=1:size(allIdx_stFI_f,1)
            r_e_over_f=denominator_edge(e)/denominator_face(f);
            for j=r_e_over_f*(i-1)+1:r_e_over_f*i
                edgecounter=edgecounter+1;
-               p_s=first_p_for_e(e)+j;
+               p_s=first_pIdx_e(e)+j;
                if att_bound_SG_e(e)==true % If e is an outer boundary of a FI region,
                    s(edgecounter)=offset_FItask(subG_e_bin(e))+j;
                    %[f,e,p_s] %disp
@@ -150,7 +152,7 @@ for ff=1:size(allIdx_stFI_f,1)
                    %[f,e,p_s] %disp
                    pause
                end
-               p_t=first_p_for_f(f)+i;
+               p_t=first_pIdx_f(f)+i;
                [t(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
                    = semi_add_dep_edge(p_t,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,false);
                D(omega, p_s)=sC(f,e);
@@ -175,10 +177,10 @@ for ee=1:size(allIdx_stFI_e,1)
        end
        omega=omega+1;
        edgecounter=edgecounter+1;
-       p_s=first_p_for_e(e)+i;
+       p_s=first_pIdx_e(e)+i;
        [s(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
            = semi_add_dep_edge(p_s,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,p_s_is_init);
-       p_t=first_p_for_e(e)+i+1;
+       p_t=first_pIdx_e(e)+i+1;
        [t(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
            = semi_add_dep_edge(p_t,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,false);
        Ctrans(omega,p_s)=-1;
@@ -194,10 +196,10 @@ for ee=1:size(allIdx_stFI_e,1)
            for j=0:denominator_face(f)-1
                if denominator_edge(e)*j==denominator_face(f)*i
                    edgecounter=edgecounter+1;
-                   p_s=first_p_for_f(f)+j;
+                   p_s=first_pIdx_f(f)+j;
                    [s(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
                        = semi_add_dep_edge(p_s,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,p_s_is_init);
-                   p_t=first_p_for_e(e)+i+1;
+                   p_t=first_pIdx_e(e)+i+1;
                    [t(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
                        = semi_add_dep_edge(p_t,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,false);
                    Ctrans(omega,p_s)=sC(f,e);
@@ -214,7 +216,7 @@ taskNum = taskIdx_newest;
 
 % omega is the row-index of D_tildeD_Zinverse; 
 % each omega corresponds to an calculation of stFI variable
-D_tildeD_Zinv=[D;Ctrans * spdiags(kappatimesz,0,MeshNum.P,MeshNum.P)];
+D_tildeD_Zinv=[D;Ctrans * spdiags(kappatimesZinv,0,MeshNum.P,MeshNum.P)];
 
 %clearvars taskIdx_for_p
 clearvars D Ctrans
@@ -242,7 +244,8 @@ clearvars Taskdependence s t
 
 disp('calculating Time Marching Matrix')
 
-TMM_Intermidiate=speye(MeshNum.P);
+TMM_Intermidiate=spalloc(MeshNum.P,MeshNum.P,5*MeshNum.P);
+TMM_Intermidiate=TMM_Intermidiate+speye(MeshNum.P);
 
 %disp("checkpoint charlie-2")
 
@@ -257,7 +260,7 @@ for taskIdx=1:taskNum
         Timesection_tgt = Timesection_for_FItask(task_tgt);
         % call FI for SG_tgt, Timesection_tgt
         TMM_Intermidiate= ...
-            TMM_FI_onestep(SG_tgt,Timesection_tgt,sC,kappatimesz,subG_f_bin,subG_e_bin,first_p)...
+            TMM_FI_onestep(SG_tgt,Timesection_tgt,sC,kappatimesZinv,subG_f_bin,subG_e_bin,first_pIdx)...
             *TMM_Intermidiate;
        % T=TMM_FI_onestep(SG_tgt,Timesection_tgt,sC,kappatimesz,subG_f_bin,subG_e_bin,first_p);
     elseif task(task_tgt).typ=="stFI"
@@ -287,20 +290,20 @@ clearvars Taskorder
 
 Store=logical(sparse([],[],[],MeshNum.F+MeshNum.E,MeshNum.P,MeshNum.F+MeshNum.E));
 for f=1:MeshNum.F
-    p_tgt=first_p_for_f(f)+denominator_face(f);
+    p_tgt=first_pIdx_f(f)+denominator_face(f);
     Store(f,p_tgt)=true;
 end 
 for e=1:MeshNum.E
-    p_tgt=first_p_for_e(e)+denominator_edge(e);
+    p_tgt=first_pIdx_e(e)+denominator_edge(e);
     Store(MeshNum.F+e,p_tgt)=true;
 end
 Store_Init=logical(sparse([],[],[],MeshNum.F+MeshNum.E,MeshNum.P,MeshNum.F+MeshNum.E));
 for f=1:MeshNum.F
-    p_tgt=first_p_for_f(f);
+    p_tgt=first_pIdx_f(f);
     Store_Init(f,p_tgt)=true;
 end 
 for e=1:MeshNum.E
-    p_tgt=first_p_for_e(e);
+    p_tgt=first_pIdx_e(e);
     Store_Init(MeshNum.F+e,p_tgt)=true;
 end
 
@@ -313,3 +316,5 @@ clearvars TMM_Intermidiate
 disp('TMM_Explicit calculated')
 
 %disp('checkpoint echo')
+
+disp('Obtain_TMM_Explicit: STOPPED')

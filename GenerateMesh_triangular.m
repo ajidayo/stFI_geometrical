@@ -3,8 +3,7 @@ function [sC,sG,denominator,edgevec,first_p,tilde_node_position,MeshNum,MeshPara
 
 disp('GenerateMesh_triangular:CALLED')
 
-global EPSILON
-global dim
+global DIM
 
 %global MeshNum
 
@@ -54,14 +53,14 @@ sG=sparse(ENum,NNum);
 denominator_node=zeros(NNum,1);
 denominator_edge=zeros(ENum,1);
 denominator_face=zeros(FNum,1);
-edge_vector=zeros(ENum,dim);
-tilde_edge_vector=zeros(ENum,dim);
+edge_vector=zeros(ENum,DIM);
+tilde_edge_vector=zeros(ENum,DIM);
 first_p_for_f=zeros(FNum,1);
 first_p_for_e=zeros(ENum,1);
 %first_Omega_for_f=zeros(FNum,1);
 %first_Omega_for_e=zeros(ENum,1);
 
-tilde_node_position=zeros(FNum,dim);
+tilde_node_position=zeros(FNum,DIM);
 
 
 %% initialize sC
@@ -1849,8 +1848,6 @@ first_p.e=first_p_for_e;
 
 %tilde_node_position;
  
-    
-disp('GenerateMesh:END')
-
+disp('GenerateMesh_triangular:STOPPED')
 
 end

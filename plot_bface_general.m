@@ -1,7 +1,6 @@
 function plot_bface_general(b_f,b_area,tilde_node_position,MeshParam,MeshNum)
 % title should be included in the argument
 
-disp('plotting')
 
 B_mesh=zeros(MeshParam.Size_X,MeshParam.Size_Y);
 area_squareoid=zeros(MeshParam.Size_X,MeshParam.Size_Y);
