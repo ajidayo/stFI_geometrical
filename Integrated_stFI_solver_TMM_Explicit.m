@@ -28,11 +28,11 @@ ImpedanceParam.medium=0.01;
 [impedance_inv_p] ...
     = impedance_triangular(ImpedanceParam,first_i_triangle_scatterer,sC,denominator,first_p,MeshNum,MeshParam);
 
-A=1;
-sigma=10;
+AmplGauss=1;
+relaxfact=10;
 
 InitVal ...
-    =Gaussian_DeadCenter_triangle(A,sigma,tilde_node_position,b_area,MeshNum,MeshParam);
+    =Gaussian_DeadCenter_triangle(AmplGauss,relaxfact,tilde_node_position,b_area,MeshNum,MeshParam);
 
 kappatimesz=kappa.*impedance_inv_p;
 %Zinverse=spdiags(kappatimesz,0,MeshNum.P,MeshNum.P);
