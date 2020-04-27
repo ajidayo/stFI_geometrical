@@ -14,8 +14,6 @@ Parameters_Mesh
 [sC,sG,denominator,edgevec,first_pIdx,tilde_node_position,MeshNum,MeshParam] ...
     = GenerateMesh_triangular(denominator_obi,MeshParam);
 
-%first_p_for=struct('f',first_p.f,'e',first_p.e);
-
 cdt=0.41
 
 % Future tasks; adapt Constitutive to partially non-orthogonal grids
