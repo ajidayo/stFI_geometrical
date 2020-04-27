@@ -14,11 +14,13 @@ Parameters_Mesh
 [sC,sG,denominator,edgevec,first_pIdx,tilde_node_position,MeshNum,MeshParam] ...
     = GenerateMesh_triangular(denominator_obi,MeshParam);
 
-att =attribute_f_and_e(sC,sG,denominator, MeshNum);
+att = attribute_f_and_e(sC,sG,denominator, MeshNum);
 
 cdt=0.41
 
 % Future tasks; adapt Constitutive to partially non-orthogonal grids
+% Future tasks; adapt Constitutive to subgrid corners
+% Future tasks; utilize spatial-FI-like calculation in Constitutive
 [kappa,b_area,MeshNum] =Constitutive(cdt,sC,sG,denominator,edgevec,first_pIdx,att,MeshNum);
 
 first_i_triangle_scatterer=20;
@@ -40,27 +42,28 @@ kappatimesZinv=kappa.*impedance_inv_p;
 
 % #4: combine both space-time and spatial FI in order to make the size of D small
 [subG_bin,subG_sizes,allIdx_stFI,denominator] ...
-    = Divide_into_induced_subgraphs(sC,sG,denominator,MeshNum,att);
+    = Divide_into_induced_subgraphs(sC,denominator,MeshNum,att);
 
 % task: allocate TMM beforehand to reduce overheads
 [TMM_Explicit] ...
     = Obtain_TMM_Explicit(kappatimesZinv,sC,denominator,allIdx_stFI,subG_bin,subG_sizes,att,first_pIdx,MeshNum);
 
-number_of_steps=100
+
 
 time=0;
+variables_f_then_e=[InitVal.f; InitVal.e];
+
+number_of_steps=100
+
 CalPeriod=cdt * number_of_steps;
 disp(['Executing Calculation: from ct = ',num2str(time), ' to ct = ',num2str(time+CalPeriod)])
 
-[variables_f_then_e] ...
-    =execution_with_TMM_Explicit(TMM_Explicit,InitVal,number_of_steps);
-
 time = time + CalPeriod;
+[variables_f_then_e] ...
+    =execution_with_TMM_Explicit(TMM_Explicit,variables_f_then_e,number_of_steps);
 
 b_f=variables_f_then_e(1:MeshNum.F);
-
 disp(['plotting Bz at ct =' num2str(time)])
-
 plot_bface_general(b_f,b_area,tilde_node_position,MeshParam,MeshNum)
 
 %%

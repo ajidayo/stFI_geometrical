@@ -50,8 +50,10 @@ for e_tar=1:MeshNum.E
     else %non-exceptional dt-boundary edge
         denominator_e_tar=denominator.e(e_tar);
         p_tar=first_pIdx.e(e_tar);        
-        endpoints_e = endpoint(e_tar,sG);
 
+        endpoints_e = endpoint(e_tar,sG);
+        endpoints_etilde=find(row_sC_e_tar);
+        
         e_connec_to_ep1=e_connec2ntar_shareincfwith_e_tar(endpoints_e(1),e_tar,sC,sG,edgevec);
         e_connec_to_ep2=e_connec2ntar_shareincfwith_e_tar(endpoints_e(2),e_tar,sC,sG,edgevec);
         DirVec_e_tar=DirectionVec(e_tar,edgevec);
@@ -65,8 +67,6 @@ for e_tar=1:MeshNum.E
                 *sign(DirVec_e_tar.'*e_connec_to_ep2(e_con).DirVec);
         end
         
-        % check that the two edges are parallel: if parallel then the direction of the two edges is the shift direction for boundary nodes
-
         Parallel=ParaCheck_e_cons(e_connec_to_ep1,e_connec_to_ep2);
         if Parallel.is==true
             DirVec_NodeDelta=e_connec_to_ep1(Parallel.e_con_ep1_Idx).DirVec;
@@ -76,28 +76,18 @@ for e_tar=1:MeshNum.E
         costheta=DirVec_NodeDelta.'*DirVec_e_tar;
         sintheta=sqrt(1-costheta^2);
         
-        % find endpoints of tilde_e from sC
-        endpoints_tilde_e=find(row_sC_e_tar);
-%         ep_tilde=0;
-%         for ff=1:size(row_sC_e_tar,1)
-%             ep_tilde=ep_tilde+1;
-%             f=row_sC_e_tar(ff);
-%             endpoints_tilde_e(ep_tilde)=f;
-%         ends
-        % end find endpoints of tilde_e from sC
-        
-        for i=1:denominator_e_tar
+        for timesection=1:denominator_e_tar
             p_tar=p_tar+1;
-            timing_p_target=(i-0.5)/denominator_e_tar;
+            timing_p_target=(timesection-0.5)/denominator_e_tar;
             Length_e_tar=sqrt(edgevec.prim(e_tar).vec.'*edgevec.prim(e_tar).vec);
             Area_p_tar=Length_e_tar*cdt/denominator_e_tar;
             Length_tilde_e=sqrt(edgevec.dual(e_tar).vec.'*edgevec.dual(e_tar).vec);
             kappa(p_tar) = Length_tilde_e/Area_p_tar;
             
-            stn_FutureEdge_ep1=first_stn_n(endpoints_e(1))+i;
-            stn_FutureEdge_ep2=first_stn_n(endpoints_e(2))+i;
+            stn_FutureEdge_ep1=first_stn_n(endpoints_e(1))+timesection;
+            stn_FutureEdge_ep2=first_stn_n(endpoints_e(2))+timesection;
             
-            df1=denominator.f(endpoints_tilde_e(1));
+            df1=denominator.f(endpoints_etilde(1));
             % calculate difference_time
             for j=1:df1
                 % can be written without if
@@ -106,7 +96,7 @@ for e_tar=1:MeshNum.E
                     break;
                 end
             end
-            df2=denominator.f(endpoints_tilde_e(1));
+            df2=denominator.f(endpoints_etilde(1));
             for j=1:df2
                 if (1.0d0/df2)*(j-1)< timing_p_target && timing_p_target < (1.0d0/df2)*j
                     timing_ep2tilde=(1.0/df2)*(j-0.5);
@@ -115,7 +105,7 @@ for e_tar=1:MeshNum.E
             end
             
             DeltaTime_etilde=cdt*(...
-                sC(endpoints_tilde_e(1),e_tar)*timing_ep1tilde+sC(endpoints_tilde_e(2),e_tar)*timing_ep2tilde);
+                sC(endpoints_etilde(1),e_tar)*timing_ep1tilde+sC(endpoints_etilde(2),e_tar)*timing_ep2tilde);
             DeltaArea=DeltaTime_etilde/kappa(p_tar); % N.B. delta_area has sign
             delta_position=DeltaArea/(Length_e_tar*sintheta);          
             stnInfo(stn_FutureEdge_ep1).NodeDeltaVec=...
@@ -137,11 +127,6 @@ for e_tar=1:MeshNum.E
          continue;
     end
 
-    %row_sC_e_tar=find(sC(:,e_tar));
-
-   % disp(e_target)
-   % disp('is not boundary')
-    % check exception-attribute
     if exception==1 %non-boundary exception (non-orthogonal)
     else %non-exceptional, non-boundary
         denominator_e_tar=denominator.e(e_tar);
@@ -153,9 +138,8 @@ for e_tar=1:MeshNum.E
         dn2=denominator.n(endpoints_e(2));
         stn_PastEdge_ep1=first_stn_n(endpoints_e(1))-dn1/denominator_e_tar;
         stn_PastEdge_ep2=first_stn_n(endpoints_e(2))-dn2/denominator_e_tar;
-        for i=1:denominator_e_tar
+        for timesection=1:denominator_e_tar
             p_tar=p_tar+1;
-%            timing_p_target=(1.0d0/denominator_e_tar)*(i+0.5d0);
             stn_PastEdge_ep1=stn_PastEdge_ep1+dn1/denominator_e_tar;
             stn_PastEdge_ep2=stn_PastEdge_ep2+dn2/denominator_e_tar;
                         
@@ -175,34 +159,31 @@ for e_tar=1:MeshNum.E
             
         end %loop for i
         kappa(p_tar-denominator_e_tar)=kappa(p_tar);
-        LorenzInvariant_dS(p_tar-denominator_e_tar)=LorenzInvariant_dS(p_tar);
+        %LorenzInvariant_dS(p_tar-denominator_e_tar)=LorenzInvariant_dS(p_tar);
     end % if for exception
 end % loop for e_target
 
 %% calculate kappa for non-boundary faces
 disp('calculating kappa for faces')
 for f_tar=1:MeshNum.F
-   % disp(f_target)
-    %sC_f_tar=sC(f_tar,:);
-    %col_sC_f_tar=find(sC_f_tar);
- 
+   
     if exception==1
     else
         denominator_f_tar=denominator.f(f_tar);
         p_tar=first_pIdx.f(f_tar)-1;
 
-        for i=0:denominator_f_tar-1
+        for timesection=0:denominator_f_tar-1
             p_tar=p_tar+1;
-            Area_p_tar=CalArea_p_f(f_tar,i,stnInfo,sC,sG,denominator,edgevec,first_stn_n);
+            Area_p_tar=CalArea_p_f(f_tar,timesection,stnInfo,sC,sG,denominator,edgevec,first_stn_n);
             kappa(p_tar)=(cdt/denominator_f_tar)/Area_p_tar;
-            %stdistance(p_target)=(cdt/denominator_f_target)^2;
-            %kappa(p_target) = sign(stdistance(p_target))*kappa(p_target);
+            %LorenzInvariant_dS(p_tar)=(cdt/denominator_f_target)^2;
+            %kappa(p_target) = sign(LorenzInvariant_dS(p_target))*kappa(p_target);
         end %loop
-        %stdistance(first_p_for_f(f_target)+denominator_f_target)=stdistance(first_p_for_f(f_target));
+        %LorenzInvariant_dS(first_pIdx.f(f_tar)+denominator_f_tar)=LorenzInvariant_dS(first_pIdx.f(f_target));
         kappa(first_pIdx.f(f_tar)+denominator_f_tar)=kappa(first_pIdx.f(f_tar));
         b_area(f_tar)=(cdt/denominator_f_tar)/kappa(first_pIdx.f(f_tar));
-    end % if for exceptions
-end % loop for f_target
+    end % if 
+end %  f_tar
 
 %% STOP
 

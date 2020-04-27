@@ -1,5 +1,5 @@
 function [subG_bin,subG_sizes,allIdx_stFI,denominator] ...
-    = Divide_into_induced_subgraphs(sC,sG,denominator,MeshNum,att)
+    = Divide_into_induced_subgraphs(sC,denominator,MeshNum,att)
 disp('Divide_into_induced_subgraphs:CALLED')
 
 %global EPSILON
