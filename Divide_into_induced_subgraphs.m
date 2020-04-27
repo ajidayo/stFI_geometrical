@@ -1,7 +1,8 @@
-function [subG_bin,subG_sizes,allIdx_stFI,denominator,att] ...
-    = Divide_into_induced_subgraphs(sC,sG,denominator,MeshNum)
+function [subG_bin,subG_sizes,allIdx_stFI,denominator] ...
+    = Divide_into_induced_subgraphs(sC,sG,denominator,MeshNum,att)
+disp('Divide_into_induced_subgraphs:CALLED')
 
-global EPSILON
+%global EPSILON
 
 denominator_face=denominator.f;
 
@@ -23,84 +24,84 @@ denominator_face=denominator.f;
 
 %sComit=logical(sC);
 sComit=logical(sC); 
-% allocate attribute vectors
-%%%%%% using structures may look smarter %%%%%%%
-att.bound_e=logical(sparse(MeshNum.E,1));
-att.inc_bound_f=logical(sparse(MeshNum.F,1));
-att.adj_bounde_e=logical(sparse(MeshNum.E,1));
-att_bound_SG_e=logical(sparse(MeshNum.E,1));
 
 % make adjacent matrix
 %%%%%%% may be used in Constitutive; DO check later on %%%%%%%%
-AdjE=logical(sG*sG.');
+%AdjE=logical(sG*sG.');
 
 %disp('checkpoint alpha')
 
-for e_target=1:MeshNum.E    
-    %%%%%% CAPSULIZE FROM %%%%%%
-    sC_e_target=sC(:,e_target);
-    row_sC_e_target=find(sC_e_target);
-    % check boundary-attribute
-    check_bound=0.0;
-    for ff=1:size(row_sC_e_target,1)
-        f=row_sC_e_target(ff);
-        check_bound=check_bound+sC(f,e_target)*denominator_face(f);
-    end
-    if abs(check_bound)<EPSILON % not a boundary
-         continue;
-    end
-    %%%%%% CAPSULIZE TO %%%%%%    
-    
-    %disp(e_target)
-    
-    % if e_target is a dt-varying boundary
-    att.bound_e(e_target)=true;
-    % for all f incident to e_target
-    for ff=1:size(row_sC_e_target,1)
-        f=row_sC_e_target(ff);
-        att.inc_bound_f(f)=true;
-        % for all e incident to f, detach from other faces
-        sComit(f,:)=false;
-    end
-end % for e_target
-att_bound_e=att.bound_e;
+% for e_target=1:MeshNum.E    
+%     %%%%%% CAPSULIZE FROM %%%%%%
+%     sC_e_target=sC(:,e_target);
+%     row_sC_e_target=find(sC_e_target);
+%     % check boundary-attribute
+%     check_bound=0.0;
+%     for ff=1:size(row_sC_e_target,1)
+%         f=row_sC_e_target(ff);
+%         check_bound=check_bound+sC(f,e_target)*denominator_face(f);
+%     end
+%     if abs(check_bound)<EPSILON % not a boundary
+%          continue;
+%     end
+%     %%%%%% CAPSULIZE TO %%%%%%    
+%     
+%     %disp(e_target)
+%     
+%     % if e_target is a dt-varying boundary
+%     att.bound_e(e_target)=true;
+%     % for all f incident to e_target
+%     for ff=1:size(row_sC_e_target,1)
+%         f=row_sC_e_target(ff);
+%         att.inc_bound_f(f)=true;
+%         % for all e incident to f, detach from other faces
+%         sComit(f,:)=false;
+%     end
+% end % for e_target
+% att_bound_e=att.bound_e;
 
-allIdx_bound_e=find(att_bound_e==true);
-for ee=1:size(allIdx_bound_e,1)
-    e_bound=allIdx_bound_e(ee);
-    AdjE_e_bound=AdjE(e_bound,:);
-    col_AdjE_e_bound=find(AdjE_e_bound);
-    for eee=1:size(col_AdjE_e_bound,2)
-        e_target=col_AdjE_e_bound(eee);
-        if att.bound_e(e_target)==false
-            att.adj_bounde_e(e_target)=true;
-        end
-    end
-end % for e_target
+allIdx_stFI.f=find(att.inc_bound_f==true);
+for ff=1:size(allIdx_stFI.f,1)
+    f=allIdx_stFI.f(ff);
+    sComit(f,:)=false;
+end
 
-clearvars AdjE
+% allIdx_bound_e=find(att_bound_e==true);
+% for ee=1:size(allIdx_bound_e,1)
+%     e_bound=allIdx_bound_e(ee);
+%     AdjE_e_bound=AdjE(e_bound,:);
+%     col_AdjE_e_bound=find(AdjE_e_bound);
+%     for eee=1:size(col_AdjE_e_bound,2)
+%         e_target=col_AdjE_e_bound(eee);
+%         if att.bound_e(e_target)==false
+%             att.adj_bounde_e(e_target)=true;
+%         end
+%     end
+% end % for e_target
+% 
+% clearvars AdjE
 
 %disp('checkpoint bravo')
 
-att_inc_bound_f=att.inc_bound_f;
-allIdx_stFI.f=find(att_inc_bound_f==true);
-allIdx_stFI_f=allIdx_stFI.f;
-
-for ff=1:size(allIdx_stFI_f,1)
-    %disp(ff)
-    f_target=allIdx_stFI_f(ff);
-    sC_f_target=sC(f_target,:);
-    col_sC_f_target=find(sC_f_target);
-    for ee=1:size(col_sC_f_target,2)
-        e=col_sC_f_target(ee);
-        if att.bound_e(e)==false && att.adj_bounde_e(e)==false
-            %disp(e)
-            att_bound_SG_e(e)=true;
-        end
-    end
-end
-
-att.bound_SG_e=att_bound_SG_e;
+% % att_inc_bound_f=att.inc_bound_f;
+% allIdx_stFI.f=find(att.inc_bound_f==true);
+% allIdx_stFI_f=allIdx_stFI.f;
+% 
+% for ff=1:size(allIdx_stFI_f,1)
+%     %disp(ff)
+%     f_target=allIdx_stFI_f(ff);
+%     sC_f_target=sC(f_target,:);
+%     col_sC_f_target=find(sC_f_target);
+%     for ee=1:size(col_sC_f_target,2)
+%         e=col_sC_f_target(ee);
+%         if att.bound_e(e)==false && att.adj_bounde_e(e)==false
+%             %disp(e)
+%             att_bound_SG_e(e)=true;
+%         end
+%     end
+% end
+% 
+% att.bound_SG_e=att_bound_SG_e;
 
 %disp('checkpoint charlie')
 
@@ -218,4 +219,5 @@ subG_sizes.e=subG_e_sizes;
 denominator.SG=denominator_SG;
 
 %disp('checkpoint golf')
+disp('Divide_into_induced_subgraphs:ENDED')
 end

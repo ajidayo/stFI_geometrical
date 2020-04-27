@@ -317,4 +317,4 @@ disp('TMM_Explicit calculated')
 
 %disp('checkpoint echo')
 
-disp('Obtain_TMM_Explicit: STOPPED')
+disp('Obtain_TMM_Explicit: ENDED')

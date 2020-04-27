@@ -14,10 +14,12 @@ Parameters_Mesh
 [sC,sG,denominator,edgevec,first_pIdx,tilde_node_position,MeshNum,MeshParam] ...
     = GenerateMesh_triangular(denominator_obi,MeshParam);
 
+att =attribute_f_and_e(sC,sG,denominator, MeshNum);
+
 cdt=0.41
 
 % Future tasks; adapt Constitutive to partially non-orthogonal grids
-[kappa,b_area,MeshNum] =Constitutive(cdt,sC,sG,denominator,edgevec,first_pIdx,MeshNum);
+[kappa,b_area,MeshNum] =Constitutive(cdt,sC,sG,denominator,edgevec,first_pIdx,att,MeshNum);
 
 first_i_triangle_scatterer=20;
 ImpedanceParam.freespace=1.0;
@@ -25,11 +27,11 @@ ImpedanceParam.medium=0.01;
 [impedance_inv_p] ...
     = impedance_triangular(ImpedanceParam,first_i_triangle_scatterer,sC,denominator,first_pIdx,MeshNum,MeshParam);
 
-AmplGauss=1;
-relaxfact=10;
+GaussParam.Ampl=1;
+GaussParam.relaxfact=10;
 
 InitVal ...
-    =Gaussian_DeadCenter_triangle(AmplGauss,relaxfact,tilde_node_position,b_area,MeshNum,MeshParam);
+    =Gaussian_DeadCenter_triangle(GaussParam,tilde_node_position,b_area,MeshNum,MeshParam);
 
 kappatimesZinv=kappa.*impedance_inv_p;
 %Zinverse=spdiags(kappatimesz,0,MeshNum.P,MeshNum.P);
@@ -37,8 +39,8 @@ kappatimesZinv=kappa.*impedance_inv_p;
 %% calculate explicitly using Time-marching Matrix
 
 % #4: combine both space-time and spatial FI in order to make the size of D small
-[subG_bin,subG_sizes,allIdx_stFI,denominator,att] ...
-    = Divide_into_induced_subgraphs(sC,sG,denominator,MeshNum);
+[subG_bin,subG_sizes,allIdx_stFI,denominator] ...
+    = Divide_into_induced_subgraphs(sC,sG,denominator,MeshNum,att);
 
 % task: allocate TMM beforehand to reduce overheads
 [TMM_Explicit] ...

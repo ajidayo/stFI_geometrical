@@ -1838,9 +1838,12 @@ denominator.n=denominator_node;
 denominator.e=denominator_edge;
 denominator.f=denominator_face;
 
-edgevec.prim=edge_vector;
-edgevec.dual=tilde_edge_vector;
-
+for e=1:MeshNum.E
+    edgevec.prim(e).vec=edge_vector(e,:).';
+end
+for e=1:MeshNum.E
+    edgevec.dual(e).vec=tilde_edge_vector(e,:).';
+end
 first_p.f=first_p_for_f;
 first_p.e=first_p_for_e;
 %first_omega.f=first_Omega_for_f;
