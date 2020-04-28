@@ -8,7 +8,7 @@ EPSILON=10^(-7);
 
 DIM=2; %number of spatial dimensions
 
-% future tasks; Modify Parameters_Mesh into function with arguements such
+% future tasks; Modify Parameters_Mesh into a function with arguements such
 % as (Size_X,Size_Y,...)
 Parameters_Mesh
 [sC,sG,denominator,edgevec,first_pIdx,tilde_node_position,MeshNum,MeshParam] ...
