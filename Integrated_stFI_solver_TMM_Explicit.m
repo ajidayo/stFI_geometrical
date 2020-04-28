@@ -16,7 +16,7 @@ Parameters_Mesh
 
 
 % Future tasks; modify att into nested structures like att.e(e).bound
-% Future tasks; add field 'orthogonality' to att
+% Future tasks; add field 'orthogonality' to att.e
 att = attribute_f_and_e(sC,sG,denominator, MeshNum);
 
 cdt=0.41
