@@ -14,6 +14,9 @@ Parameters_Mesh
 [sC,sG,denominator,edgevec,first_pIdx,tilde_node_position,MeshNum,MeshParam] ...
     = GenerateMesh_triangular(denominator_obi,MeshParam);
 
+
+% Future tasks; modify att into nested structures like att.e(e).bound
+% Future tasks; add field 'orthogonality' to att
 att = attribute_f_and_e(sC,sG,denominator, MeshNum);
 
 cdt=0.41
