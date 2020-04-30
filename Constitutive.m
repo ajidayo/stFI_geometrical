@@ -1,8 +1,8 @@
-function [kappa,b_area,MeshNum] ...
+function [kappa,b_area,att,MeshNum] ...
     =Constitutive(cdt,sC,sG,denominator,edgevec,first_pIdx,att,MeshNum)
 disp('Constitutive: CALLED')
 
-%global EPSILON
+global EPSILON
 global DIM
 
 exception=0;% dummy
@@ -10,6 +10,17 @@ exception=0;% dummy
 %cdt=0.3;
 %% Allocation
 %endpoints_tilde_e=zeros(2,1);
+
+att.nonorthogonal_e=logical(sparse(MeshNum.E,1));
+for e_tar=1:MeshNum.E
+   if DirectionVecPrim(e_tar,edgevec).'*DirectionVecDual(e_tar,edgevec)>EPSILON
+       disp(['nonorthogonal edge found:e=',num2str(e_tar),...
+           'cos of the edge pair =',...
+           num2str(DirectionVecPrim(e_tar,edgevec).'*DirectionVecDual(e_tar,edgevec))])
+       pause(1)
+       att.nonorthogonal_e(e_tar)=true;
+   end
+end
 
 DirVec_NodeDelta=zeros(DIM,1); %(xy)
 
@@ -39,7 +50,7 @@ clearvars Dummy
 %% calculate kappa for boundary edges
 disp('calculating kappa for boundary edges')
 for e_tar=1:MeshNum.E
-    if att.bound_e(e_tar)==false
+    if att.bound_e(e_tar)==false || att.nonorthogonal_e(e_tar)==true
          continue;
     end
 
@@ -53,10 +64,12 @@ for e_tar=1:MeshNum.E
 
         endpoints_e = endpoint(e_tar,sG);
         endpoints_etilde=find(row_sC_e_tar);
-        
+
+        DirVec_e_tar=DirectionVecPrim(e_tar,edgevec);
+        %DirVec_etilde_tar=DirectionVecDual(e_tar,edgevec);
+                
         e_connec_to_ep1=e_connec2ntar_shareincfwith_e_tar(endpoints_e(1),e_tar,sC,sG,edgevec);
         e_connec_to_ep2=e_connec2ntar_shareincfwith_e_tar(endpoints_e(2),e_tar,sC,sG,edgevec);
-        DirVec_e_tar=DirectionVec(e_tar,edgevec);
 
         % correct directions of vec_e1c, vec_e2c: the direction is the same
         % as the direction of edgevec.dual.(the direction of g, or tilde e)
@@ -71,6 +84,7 @@ for e_tar=1:MeshNum.E
         if Parallel.is==true
             DirVec_NodeDelta=e_connec_to_ep1(Parallel.e_con_ep1_Idx).DirVec;
         else
+            % maybe corner of the subgrid
             disp(['error; Cannot define DirVec_NodeDelta for e_tar = ', num2str(e_tar)])
         end  
         costheta=DirVec_NodeDelta.'*DirVec_e_tar;
@@ -120,6 +134,9 @@ for e_tar=1:MeshNum.E
         kappa(p_tar-denominator_e_tar)=kappa(p_tar);
     end % if 
 end
+%% calculate kappa for non-orthogonal boundary edges (corners)
+
+
 %% calculate kappa for non-boundary edges
 disp('calculating kappa for non-boundary edges')
 for e_tar=1:MeshNum.E  
@@ -127,7 +144,7 @@ for e_tar=1:MeshNum.E
          continue;
     end
 
-    if exception==1 %non-boundary exception (non-orthogonal)
+    if exception==1 
     else %non-exceptional, non-boundary
         denominator_e_tar=denominator.e(e_tar);
         p_tar=first_pIdx.e(e_tar);
@@ -149,8 +166,12 @@ for e_tar=1:MeshNum.E
             Length_e_tar=sqrt(edgevec.prim(e_tar).vec.'*edgevec.prim(e_tar).vec);
             Area_p_tar =Length_e_tar*cdt/denominator_e_tar + (BulgeArea1+BulgeArea2);
             Length_tilde_e=sqrt(edgevec.dual(e_tar).vec.'*edgevec.dual(e_tar).vec);
-            kappa(p_tar) = Length_tilde_e/Area_p_tar;
             
+            
+            sin_p2d_e=DirectionVecPrim(e_tar,edgevec).'*[0 1;-1 0]*DirectionVecDual(e_tar,edgevec);
+         
+            Area_p_tar=sin_p2d_e*Area_p_tar;
+            kappa(p_tar) = Length_tilde_e/Area_p_tar;
             %LorenzInvariant_dS(p_tar)=-length_tilde_e^2;            
             
             % this two lines must be alternatively commented out 
@@ -219,7 +240,7 @@ for ee=1:size(row_sG_n_tar,1) % loop for e
         if sC(f,e_tar)~=0 % if sC(f,e)~=0 && sC(f,e_target)~=0
             e_connec2ntar(e_con).eIdx=e;
             e_connec2ntar(e_con).ShareIncf=f;
-            e_connec2ntar(e_con).DirVec=DirectionVec(e,edgevec);
+            e_connec2ntar(e_con).DirVec=DirectionVecPrim(e,edgevec);
             e_con=e_con+1;
             break;
         end %if
@@ -230,11 +251,19 @@ for ee=1:size(row_sG_n_tar,1) % loop for e
 end %for loop1
 end
 
-function DirectionVecRetu=DirectionVec(e_tar,edgevec)
+function DirectionVecRetu=DirectionVecPrim(e_tar,edgevec)
 %compute direction vectors
 DirectionVecRetu=edgevec.prim(e_tar).vec;
 DirectionVecRetu=(1.0/sqrt( DirectionVecRetu.'*DirectionVecRetu ))*DirectionVecRetu;
 end
+
+
+function DirectionVecRetu=DirectionVecDual(e_tar,edgevec)
+%compute direction vectors
+DirectionVecRetu=edgevec.dual(e_tar).vec;
+DirectionVecRetu=(1.0/sqrt( DirectionVecRetu.'*DirectionVecRetu ))*DirectionVecRetu;
+end
+
 
 function [Parallel]=ParaCheck_e_cons(e_connec_to_ep1,e_connec_to_ep2)
 global EPSILON

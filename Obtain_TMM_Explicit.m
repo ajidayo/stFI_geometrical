@@ -1,5 +1,5 @@
 function [TMM_Explicit] ...
-    = Obtain_TMM_Explicit(kappatimesZinv,sC,denominator,allIdx_stFI,subG_bin,subG_sizes,att,first_pIdx,MeshNum)
+    = Obtain_TMM_Explicit(kappaoverZ,sC,denominator,allIdx_stFI,subG_bin,subG_sizes,att,first_pIdx,MeshNum)
 
 disp('Obtain_TMM_Explicit: CALLED')
 
@@ -216,7 +216,7 @@ taskNum = taskIdx_newest;
 
 % omega is the row-index of D_tildeD_Zinverse; 
 % each omega corresponds to an calculation of stFI variable
-D_tildeD_Zinv=[D;Ctrans * spdiags(kappatimesZinv,0,MeshNum.P,MeshNum.P)];
+D_tildeD_Zinv=[D;Ctrans * spdiags(kappaoverZ,0,MeshNum.P,MeshNum.P)];
 
 %clearvars taskIdx_for_p
 clearvars D Ctrans
@@ -260,7 +260,7 @@ for taskIdx=1:taskNum
         Timesection_tgt = Timesection_for_FItask(task_tgt);
         % call FI for SG_tgt, Timesection_tgt
         TMM_Intermidiate= ...
-            TMM_FI_onestep(SG_tgt,Timesection_tgt,sC,kappatimesZinv,subG_f_bin,subG_e_bin,first_pIdx)...
+            TMM_FI_onestep(SG_tgt,Timesection_tgt,sC,kappaoverZ,subG_f_bin,subG_e_bin,first_pIdx)...
             *TMM_Intermidiate;
        % T=TMM_FI_onestep(SG_tgt,Timesection_tgt,sC,kappatimesz,subG_f_bin,subG_e_bin,first_p);
     elseif task(task_tgt).typ=="stFI"
