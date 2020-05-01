@@ -8,34 +8,30 @@ DIM=2; %number of spatial dimensions
 
 Location_MeshMeas=imread('MeshMeasurements.png');
 image(Location_MeshMeas)
-
 MeshMeasurements=MeshMeasurements_100times100_withTriangle;
-
 [MeshParam] = Parameters_Mesh(MeshMeasurements);
 MeshParam.deltatriangle=0.1;
 MeshParam.deltaboundary=1.0/12.0;
-
-denominator_obi=2;
-
-[sC,sG,denominator,edgevec,first_pIdx,tilde_node_position,MeshNum,MeshParam] ...
-    = GenerateMesh_triangular(denominator_obi,MeshParam);
+UpdateNum_obi=2;
+[sC,sG,UpdateNum,edgevec,first_pIdx,tilde_node_position,MeshNum,MeshParam] ...
+    = GenerateMesh_triangular(UpdateNum_obi,MeshParam);
 
 % Future tasks; modify att into nested structures like att.e(e).bound
-att = attribute_f_and_e(sC,sG,denominator, MeshNum);
+att = attribute_f_and_e(sC,sG,UpdateNum, MeshNum);
 
-cdt=0.41
+cdt=0.41;
 
 % Future tasks; adapt Constitutive to partially non-orthogonal grids:DONE
 % but not been tested yet
 % Future tasks; adapt Constitutive to subgrid corners
 % Future tasks; utilize spatial-FI-like calculation in Constitutive
-[kappa,b_area,att,MeshNum] = Constitutive(cdt,sC,sG,denominator,edgevec,first_pIdx,att,MeshNum);
+[kappa,b_area,att,MeshNum] = Constitutive(cdt,sC,sG,UpdateNum,edgevec,first_pIdx,att,MeshNum);
 
 first_i_triangle_scatterer=20;
 ImpedanceParam.freespace=1.0;
 ImpedanceParam.medium=0.01;
 [impedance_inv_p] ...
-    = impedance_triangular(ImpedanceParam,first_i_triangle_scatterer,sC,denominator,first_pIdx,MeshNum,MeshParam);
+    = impedance_triangular(ImpedanceParam,first_i_triangle_scatterer,sC,UpdateNum,first_pIdx,MeshNum,MeshParam);
 
 GaussParam.Ampl=1;
 GaussParam.relaxfact=10;
@@ -44,19 +40,16 @@ InitVal ...
     =Gaussian_DeadCenter_triangle(GaussParam,tilde_node_position,b_area,MeshNum,MeshParam);
 
 kappaoverZ=kappa.*impedance_inv_p;
-%Zinverse=spdiags(kappatimesz,0,MeshNum.P,MeshNum.P);
 
 %% calculate explicitly using Time-marching Matrix
 
 % #4: combine both space-time and spatial FI in order to make the size of D small
-[subG_bin,subG_sizes,allIdx_stFI,denominator] ...
-    = Divide_into_induced_subgraphs(sC,denominator,MeshNum,att);
+[subG_bin,subG_sizes,allIdx_stFI,UpdateNum] ...
+    = Divide_into_induced_subgraphs(sC,UpdateNum,MeshNum,att);
 
 % task: allocate TMM beforehand to reduce overheads
 [TMM_Explicit] ...
-    = Obtain_TMM_Explicit(kappaoverZ,sC,denominator,allIdx_stFI,subG_bin,subG_sizes,att,first_pIdx,MeshNum);
-
-
+    = Obtain_TMM_Explicit(kappaoverZ,sC,UpdateNum,allIdx_stFI,subG_bin,subG_sizes,att,first_pIdx,MeshNum);
 
 time=0;
 variables_f_then_e=[InitVal.f; InitVal.e];
@@ -73,7 +66,8 @@ time = time + CalPeriod;
 b_f=variables_f_then_e(1:MeshNum.F);
 disp(['plotting Bz at ct =' num2str(time)])
 plot_bface_general(b_f,b_area,tilde_node_position,MeshParam,MeshNum)
-% 
+
+ 
 % eigenvalues = eigs(TMM_Explicit,20,'largestabs','Tolerance',1e-3);
 % 
 % plot(eigenvalues)

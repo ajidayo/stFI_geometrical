@@ -1,29 +1,7 @@
 function [TMM_Explicit] ...
-    = Obtain_TMM_Explicit(kappaoverZ,sC,denominator,allIdx_stFI,subG_bin,subG_sizes,att,first_pIdx,MeshNum)
+    = Obtain_TMM_Explicit(kappaoverZ,sC,UpdateNum,allIdx_stFI,subG_bin,subG_sizes,att,first_pIdx,MeshNum)
 
 disp('Obtain_TMM_Explicit: CALLED')
-
-denominator_SG=denominator.SG;
-denominator_face=denominator.f;
-denominator_edge=denominator.e;
-
-
-allIdx_stFI_f=allIdx_stFI.f;
-allIdx_stFI_e=allIdx_stFI.e;
-
-subG_f_bin=subG_bin.f;
-subG_e_bin=subG_bin.e;
-
-subG_f_sizes=subG_sizes.f;
-
-att_inc_bound_f=att.inc_bound_f;
-att_bound_SG_e=att.bound_SG_e;
-att_adj_bounde_e=att.adj_bounde_e;
-att_bound_e=att.bound_e;
-
-first_pIdx_f=first_pIdx.f;
-first_pIdx_e=first_pIdx.e;
-
 
 % this unit generates the explicit time-marching matrix combining the
 % space-time and spatial FI formulation.
@@ -35,10 +13,10 @@ first_pIdx_e=first_pIdx.e;
 task=struct('typ',[],'p_tgt',[],'omega_tgt',[],'SG_tgt',[],'Tsec_tgt',[]);
 
 sum=0;
-offset_FItask=zeros(size(subG_f_sizes,1),1);
-for SGIdx=1:size(subG_f_sizes,2)
+offset_FItask=zeros(size(subG_sizes.f,1),1);
+for SGIdx=1:size(subG_sizes.f,2)
     offset_FItask(SGIdx)=sum;
-    sum=sum+denominator_SG(SGIdx);
+    sum=sum+UpdateNum.SG(SGIdx);
 end
 FItaskNum=sum;
 
@@ -46,8 +24,8 @@ SG_for_FItask=zeros(FItaskNum,1);
 Timesection_for_FItask=zeros(FItaskNum,1);
 FItask=0;
 edgecounter=0;
-for SGIdx=1:size(subG_f_sizes,2)
-    for i=1:denominator_SG(SGIdx)
+for SGIdx=1:size(subG_sizes.f,2)
+    for i=1:UpdateNum.SG(SGIdx)
         FItask=FItask+1;
         task(FItask).typ="FI";
         SG_for_FItask(FItask)=SGIdx;
@@ -67,17 +45,17 @@ omega_for_taskIdx = sparse(FItaskNum,1);% gives the omega corresponding to each 
 % (iff taskIdx=1,...,FItaskNum, equals zero)
 taskIdx_newest=FItaskNum;
 
-allIdx_bound_SG_e=find(att_bound_SG_e==true);
+allIdx_bound_SG_e=find(att.e.bound_of_SG==true);
 for ee=1:size(allIdx_bound_SG_e,1) %SGboundary edges
     e=allIdx_bound_SG_e(ee);
     sC_e=sC(:,e);
     row_sC_e=find(sC_e);
     for ff=1:size(row_sC_e,1) % faces incident to edge
         f=row_sC_e(ff);
-        if att_inc_bound_f(f) == true %not SG face 
-            SG_tgt=subG_e_bin(e);
+        if att.f.inc_bounde(f) == true %not SG face 
+            SG_tgt=subG_bin.e(e);
             %disp(SG_tgt)
-            for i=1:denominator_SG(SG_tgt)
+            for i=1:UpdateNum.SG(SG_tgt)
                 edgecounter=edgecounter+1;
                 if i==1
                     p_is_init=true;
@@ -85,7 +63,7 @@ for ee=1:size(allIdx_bound_SG_e,1) %SGboundary edges
                     p_is_init=false;
                 end
                 FItask_tgt=offset_FItask(SG_tgt)+i;
-                p_s=first_pIdx_f(f)+i-1;
+                p_s=first_pIdx.f(f)+i-1;
                 [s(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
                     = semi_add_dep_edge(p_s,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,p_is_init);               
                 t(edgecounter)=FItask_tgt;
@@ -113,11 +91,11 @@ Ctrans=sparse(1,MeshNum.P);
 omega=0;
 % Each edgecounter corresponds to a dependence relation between tasks
 
-for ff=1:size(allIdx_stFI_f,1)
-   f=allIdx_stFI_f(ff);
+for ff=1:size(allIdx_stFI.f,1)
+   f=allIdx_stFI.f(ff);
    sC_f=sC(f,:);
    col_sC_f=find(sC_f);
-   for i=1:denominator_face(f)
+   for i=1:UpdateNum.f(f)
        omega=omega+1;
        edgecounter=edgecounter+1;
        if i==1
@@ -125,10 +103,10 @@ for ff=1:size(allIdx_stFI_f,1)
        else
            p_s_is_init=false;
        end
-       p_s=first_pIdx_f(f)+i-1;
+       p_s=first_pIdx.f(f)+i-1;
        [s(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
            = semi_add_dep_edge(p_s,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,p_s_is_init);
-       p_t=first_pIdx_f(f)+i;
+       p_t=first_pIdx.f(f)+i;
        [t(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
            = semi_add_dep_edge(p_t,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,false      );
        D(omega,p_s)=-1;
@@ -136,14 +114,14 @@ for ff=1:size(allIdx_stFI_f,1)
        omega_for_taskIdx(taskIdx_for_p(p_t))=omega;
        for ee=1:size(col_sC_f,2)
            e=col_sC_f(ee);
-           r_e_over_f=denominator_edge(e)/denominator_face(f);
+           r_e_over_f=UpdateNum.e(e)/UpdateNum.f(f);
            for j=r_e_over_f*(i-1)+1:r_e_over_f*i
                edgecounter=edgecounter+1;
-               p_s=first_pIdx_e(e)+j;
-               if att_bound_SG_e(e)==true % If e is an outer boundary of a FI region,
-                   s(edgecounter)=offset_FItask(subG_e_bin(e))+j;
+               p_s=first_pIdx.e(e)+j;
+               if att.e.bound_of_SG(e)==true % If e is an outer boundary of a FI region,
+                   s(edgecounter)=offset_FItask(subG_bin.e(e))+j;
                    %[f,e,p_s] %disp
-               elseif att_adj_bounde_e(e)==true || att_bound_e(e)==true
+               elseif att.e.adj_bounde(e)==true || att.e.boundaryedge(e)==true
                    [s(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
                        = semi_add_dep_edge(p_s,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,false);
                    %[f,e,p_s] %disp
@@ -152,7 +130,7 @@ for ff=1:size(allIdx_stFI_f,1)
                    %[f,e,p_s] %disp
                    pause
                end
-               p_t=first_pIdx_f(f)+i;
+               p_t=first_pIdx.f(f)+i;
                [t(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
                    = semi_add_dep_edge(p_t,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,false);
                D(omega, p_s)=sC(f,e);
@@ -165,11 +143,11 @@ OmegaNum=omega;
 %disp('checkpoint bravo')
 
 omega=0;
-for ee=1:size(allIdx_stFI_e,1)
-   e=allIdx_stFI_e(ee);
+for ee=1:size(allIdx_stFI.e,1)
+   e=allIdx_stFI.e(ee);
    sC_e=sC(:,e);
    row_sC_e=find(sC_e);
-   for i=0:denominator_edge(e)-1
+   for i=0:UpdateNum.e(e)-1
        if i==0
            p_s_is_init=true;
        else
@@ -177,10 +155,10 @@ for ee=1:size(allIdx_stFI_e,1)
        end
        omega=omega+1;
        edgecounter=edgecounter+1;
-       p_s=first_pIdx_e(e)+i;
+       p_s=first_pIdx.e(e)+i;
        [s(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
            = semi_add_dep_edge(p_s,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,p_s_is_init);
-       p_t=first_pIdx_e(e)+i+1;
+       p_t=first_pIdx.e(e)+i+1;
        [t(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
            = semi_add_dep_edge(p_t,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,false);
        Ctrans(omega,p_s)=-1;
@@ -189,17 +167,17 @@ for ee=1:size(allIdx_stFI_e,1)
        for ff=1:size(row_sC_e,1)
            f=row_sC_e(ff);
            % for debugging
-%           if att_inc_bound_f(f)~=true
+%           if att.f.inc_bounde(f)~=true
 %               disp('error')
 %               pause
 %           end
-           for j=0:denominator_face(f)-1
-               if denominator_edge(e)*j==denominator_face(f)*i
+           for j=0:UpdateNum.f(f)-1
+               if UpdateNum.e(e)*j==UpdateNum.f(f)*i
                    edgecounter=edgecounter+1;
-                   p_s=first_pIdx_f(f)+j;
+                   p_s=first_pIdx.f(f)+j;
                    [s(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
                        = semi_add_dep_edge(p_s,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,p_s_is_init);
-                   p_t=first_pIdx_e(e)+i+1;
+                   p_t=first_pIdx.e(e)+i+1;
                    [t(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
                        = semi_add_dep_edge(p_t,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,false);
                    Ctrans(omega,p_s)=sC(f,e);
@@ -260,9 +238,9 @@ for taskIdx=1:taskNum
         Timesection_tgt = Timesection_for_FItask(task_tgt);
         % call FI for SG_tgt, Timesection_tgt
         TMM_Intermidiate= ...
-            TMM_FI_onestep(SG_tgt,Timesection_tgt,sC,kappaoverZ,subG_f_bin,subG_e_bin,first_pIdx)...
+            TMM_FI_onestep(SG_tgt,Timesection_tgt,sC,kappaoverZ,subG_bin.f,subG_bin.e,first_pIdx)...
             *TMM_Intermidiate;
-       % T=TMM_FI_onestep(SG_tgt,Timesection_tgt,sC,kappatimesz,subG_f_bin,subG_e_bin,first_p);
+       % T=TMM_FI_onestep(SG_tgt,Timesection_tgt,sC,kappatimesz,subG_bin.f,subG_bin.e,first_p);
     elseif task(task_tgt).typ=="stFI"
         %disp('stFI')
         p_tgt = p_for_taskIdx(task_tgt);
@@ -290,20 +268,20 @@ clearvars Taskorder
 
 Store=logical(sparse([],[],[],MeshNum.F+MeshNum.E,MeshNum.P,MeshNum.F+MeshNum.E));
 for f=1:MeshNum.F
-    p_tgt=first_pIdx_f(f)+denominator_face(f);
+    p_tgt=first_pIdx.f(f)+UpdateNum.f(f);
     Store(f,p_tgt)=true;
 end 
 for e=1:MeshNum.E
-    p_tgt=first_pIdx_e(e)+denominator_edge(e);
+    p_tgt=first_pIdx.e(e)+UpdateNum.e(e);
     Store(MeshNum.F+e,p_tgt)=true;
 end
 Store_Init=logical(sparse([],[],[],MeshNum.F+MeshNum.E,MeshNum.P,MeshNum.F+MeshNum.E));
 for f=1:MeshNum.F
-    p_tgt=first_pIdx_f(f);
+    p_tgt=first_pIdx.f(f);
     Store_Init(f,p_tgt)=true;
 end 
 for e=1:MeshNum.E
-    p_tgt=first_pIdx_e(e);
+    p_tgt=first_pIdx.e(e);
     Store_Init(MeshNum.F+e,p_tgt)=true;
 end
 

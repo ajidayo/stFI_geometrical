@@ -1,5 +1,5 @@
 function [impedance_inv_p] ...
-    = impedance_triangular(ImpedanceParam,first_i_triangle_scatterer,sC,denominator,first_pIdx,MeshNum,MeshParam)
+    = impedance_triangular(ImpedanceParam,first_i_triangle_scatterer,sC,UpdateNum,first_pIdx,MeshNum,MeshParam)
 
 
 %% allocation
@@ -91,16 +91,14 @@ end
 
 first_pIdx_f=first_pIdx.f;
 first_pIdx_e=first_pIdx.e;
-denominator_face=denominator.f;
-denominator_edge=denominator.e;
 for f=1:MeshNum.F
-    for p = first_pIdx_f(f):first_pIdx_f(f)+denominator_face(f)
+    for p = first_pIdx_f(f):first_pIdx_f(f)+UpdateNum.f(f)
         impedance_inv_p(p)=impedance_inverse_f(f);
     end
 end
 
 for e=1:MeshNum.E
-    for p = first_pIdx_e(e):first_pIdx_e(e)+denominator_edge(e)
+    for p = first_pIdx_e(e):first_pIdx_e(e)+UpdateNum.e(e)
         impedance_inv_p(p)=impedance_inverse_e(e);
     end
 end
