@@ -1,4 +1,4 @@
-function [MeshParam]=Parameters_Mesh(MeshMeasurements)
+function [MeshParam]=MeshParameters_triangle_belt(MeshMeasurements)
 
 % MeshMeasurements.XCoord
 % MeshMeasurements.YCoord

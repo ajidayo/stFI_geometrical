@@ -1,5 +1,5 @@
 function [InitVal] ...
-    =Gaussian_DeadCenter_triangle(GaussParam,tilde_node_position,b_area,MeshNum,MeshParam)
+    =Gaussian_DeadCenter(GaussParam,tilde_node_position,b_area,MeshNum,MeshParam)
 %% gaussian distribution parameters
 
 
