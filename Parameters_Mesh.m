@@ -1,30 +1,47 @@
-%clear;
-% PARAMETERS
-denominator_obi=2;
+function [MeshParam]=Parameters_Mesh(MeshMeasurements)
 
-% Size_X=100;
-% Fine_Y_from=66;
-% Fine_Y_to=105;
-% Triangle_Y_from=68;
-% Triangle_Y_to=103;
-% Size_Y=120;
+% MeshMeasurements.XCoord
+% MeshMeasurements.YCoord
+% MeshMeasurements.FineStartAtYCoord=66;
+% MeshMeasurements.TriangleStartAtYCoord=67;
+% MeshMeasurements.TriangleEndAtYCoord=85;
+% MeshMeasurements.FineEndAtYCoord=86;
 
-%  Size_X=50;
-%  Fine_Y_from=31;
-%  Fine_Y_to=50;
-%  Triangle_Y_from=33;
-%  Triangle_Y_to=48;
-%  Size_Y=60;
 
-MeshParam.Size_X=100;
-MeshParam.Fine_Y_from=66;
-MeshParam.Fine_Y_to=105;
-MeshParam.Triangle_Y_from=68;
-MeshParam.Triangle_Y_to=103;
-MeshParam.Size_Y=120;
+MeshParam.Size_X=MeshMeasurements.XCoord;
 
-%% mesh DOF parameters
+MeshParam.Fine_Y_from=floor(MeshMeasurements.FineStartAtYCoord)+1;
 
-MeshParam.deltatriangle=0.1;
-MeshParam.deltaboundary=1.0/12.0;
+MeshParam.Triangle_Y_from=...
+    2*( (1/2)*floor(2*MeshMeasurements.TriangleStartAtYCoord)...
+    -floor(MeshMeasurements.FineStartAtYCoord) )...
+    +MeshParam.Fine_Y_from;
+MeshParam.Triangle_Y_from=round(MeshParam.Triangle_Y_from);
+MeshParam.Triangle_Y_to=...
+    2*( (1/2)*ceil(2*MeshMeasurements.TriangleEndAtYCoord)...
+    - (1/2)*floor(2*MeshMeasurements.TriangleStartAtYCoord) )...
+    +MeshParam.Triangle_Y_from...
+    -1;
+MeshParam.Triangle_Y_to=round(MeshParam.Triangle_Y_to);
+MeshParam.Fine_Y_to=...
+    2*( (1/2)*ceil(2*MeshMeasurements.FineEndAtYCoord)...
+    - (1/2)*ceil(2*MeshMeasurements.TriangleEndAtYCoord) )...
+    +MeshParam.Triangle_Y_to;
+MeshParam.Fine_Y_to=round(MeshParam.Fine_Y_to);
+MeshParam.Size_Y=...
+    round(MeshMeasurements.YCoord)...
+    -(1/2)*ceil(2*MeshMeasurements.FineEndAtYCoord)...
+    +MeshParam.Fine_Y_to;
+MeshParam.Size_Y=round(MeshParam.Size_Y);
+
+% MeshParam.Fine_Y_from=66;
+% MeshParam.Triangle_Y_from=68;
+% MeshParam.Triangle_Y_to=103;
+% MeshParam.Fine_Y_to=105;
+% MeshParam.Size_Y=120;
+
+% %% mesh DOF parameters
+% 
+% MeshParam.deltatriangle=0.1;
+% MeshParam.deltaboundary=1.0/12.0;
 

@@ -7,12 +7,24 @@ global DIM
 EPSILON=10^(-7);
 DIM=2; %number of spatial dimensions
 
-% future tasks; Modify Parameters_Mesh into a function with arguements such
-% as (Size_X,Size_Y,...)
-Parameters_Mesh
+Location_MeshMeas=imread('MeshMeasurements.png');
+image(Location_MeshMeas)
+
+MeshMeasurements.XCoord=100;
+MeshMeasurements.YCoord=100;
+MeshMeasurements.FineStartAtYCoord=65;
+MeshMeasurements.TriangleStartAtYCoord=66;
+MeshMeasurements.TriangleEndAtYCoord=84;
+MeshMeasurements.FineEndAtYCoord=85;
+
+[MeshParam]=Parameters_Mesh(MeshMeasurements);
+MeshParam.deltatriangle=0.1;
+MeshParam.deltaboundary=1.0/12.0;
+
+denominator_obi=2;
+
 [sC,sG,denominator,edgevec,first_pIdx,tilde_node_position,MeshNum,MeshParam] ...
     = GenerateMesh_triangular(denominator_obi,MeshParam);
-
 
 % Future tasks; modify att into nested structures like att.e(e).bound
 att = attribute_f_and_e(sC,sG,denominator, MeshNum);
