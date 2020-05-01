@@ -53,12 +53,18 @@ sG=sparse(ENum,NNum);
 UpdateNum.n=zeros(NNum,1);
 UpdateNum.e=zeros(ENum,1);
 UpdateNum.f=zeros(FNum,1);
-edgevec=zeros(ENum,DIM);
-tilde_edge_vector=zeros(ENum,DIM);
+
+Dummy=cell(MeshNum.E,1);
+for e=1:MeshNum.E
+    Dummy{e}=zeros(DIM,1);
+end
+edgevec.prim=struct('vec',Dummy);
+edgevec.dual=struct('vec',Dummy);
+clearvars Dummy
+
+
 first_pIdx.f=zeros(FNum,1);
 first_pIdx.e=zeros(ENum,1);
-%first_Omega_for_f=zeros(FNum,1);
-%first_Omega_for_e=zeros(ENum,1);
 
 tilde_node_position=zeros(FNum,DIM);
 
@@ -1136,8 +1142,8 @@ end
 
 %%
 
-%[row_sC,col_sC]=find(sC);
-%[row_sG,col_sG]=find(sG);
+[row_sC,col_sC]=find(sC);
+[row_sG,col_sG]=find(sG);
 
 %% initializing edge_vector
 

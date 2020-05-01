@@ -19,7 +19,7 @@ MeshNum.F=FNum;
 MeshParam.coarse_ENum_X_former=MeshParam.coarse_FNum_former;
 MeshParam.fine_ENum_X=MeshParam.fine_FNum+2*MeshParam.Size_X;
 MeshParam.coarse_ENum_X_latter=MeshParam.Size_X*(MeshParam.Size_Y-MeshParam.Fine_Y_to-1);
-MeshParam.ENum_X=MeshParam.coarse_ENum_X_former+MeshParam.fine+MeshParam.coarse_ENum_X_latter;
+MeshParam.ENum_X=MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X+MeshParam.coarse_ENum_X_latter;
 
 MeshParam.coarse_ENum_Y_former=MeshParam.coarse_FNum_former;
 MeshParam.fine_ENum_Y=MeshParam.fine_FNum;
@@ -35,21 +35,26 @@ NNum=MeshParam.coarse_NNum_former+MeshParam.fine_NNum+MeshParam.coarse_NNum_latt
 MeshNum.N=NNum;
 
 %% check
-disp('Check; [FNum, ENum, NNum]=')
+disp('Check; [FNum, MeshNum.E, NNum]=')
 disp([MeshNum.F MeshNum.E MeshNum.N])
 
 %% Allocate Arrays
-sC=sparse(FNum,ENum);
-sG=sparse(ENum,NNum);
+sC=sparse(FNum,MeshNum.E);
+sG=sparse(MeshNum.E,NNum);
 UpdateNum.n=zeros(NNum,1);
-UpdateNum.e=zeros(ENum,1);
+UpdateNum.e=zeros(MeshNum.E,1);
 UpdateNum.f=zeros(FNum,1);
-edge_vector=zeros(ENum,DIM);
-tilde_edge_vector=zeros(ENum,DIM);
+
+Dummy=cell(MeshNum.E,1);
+for e=1:MeshNum.E
+    Dummy{e}=zeros(DIM,1);
+end
+edgevec.prim=struct('vec',Dummy);
+edgevec.dual=struct('vec',Dummy);
+clearvars Dummy
+
 first_pIdx.f=zeros(FNum,1);
-first_pIdx.e=zeros(ENum,1);
-%first_Omega_for_f=zeros(FNum,1);
-%first_Omega_for_e=zeros(ENum,1);
+first_pIdx.e=zeros(MeshNum.E,1);
 
 tilde_node_position=zeros(FNum,DIM);
 
@@ -449,8 +454,8 @@ end
 
 %%
 
-%[row_sC,col_sC]=find(sC);
-%[row_sG,col_sG]=find(sG);
+[row_sC,col_sC]=find(sC);
+[row_sG,col_sG]=find(sG);
 
 %% initializing edge_vector
 
@@ -744,17 +749,18 @@ end
 for f=1:MeshParam.coarse_FNum_former
     UpdateNum.f(f)=1;
 end
-for f=MeshParam.coarse_FNum_former+1:MeshParam.coarse_FNum_former+MeshParam.fine_FNum+MeshParam.triangle_FNum+MeshParam.fine_FNum
+for f=MeshParam.coarse_FNum_former+1:MeshParam.coarse_FNum_former+MeshParam.fine_FNum
     UpdateNum.f(f)=UpdateNum_belt;
 end
-for f=MeshParam.coarse_FNum_former+MeshParam.fine_FNum+MeshParam.triangle_FNum+MeshParam.fine_FNum+1:FNum
+for f=MeshParam.coarse_FNum_former+MeshParam.fine_FNum+1:FNum
     UpdateNum.f(f)=1;
 end
 
 
 % genrate UpdateNum.e,UpdateNum.n
 % can be prosessed in parallel
-for e=1:ENum
+
+for e=1:MeshNum.E
     UpdateNum.e(e)=0;
 end
 for kk=1:size(row_sC,1)
@@ -789,7 +795,7 @@ for f=1:FNum
 end
 %OmegaNum=Omega-1;
 %Omega=1;
-for e=1:ENum
+for e=1:MeshNum.E
     first_pIdx.e(e)=p;
     %first_Omega_for_e(e)=Omega;
     %l(p)=0;
