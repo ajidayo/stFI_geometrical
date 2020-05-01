@@ -1,5 +1,6 @@
 function [InitVal] ...
     =GaussianDistributBz(GaussParam,tilde_node_position,b_area,MeshNum,gauss_center)
+disp('GaussianDistributBz; CALLED')
 %% gaussian distribution parameters
 
 disp('A sigma =')
@@ -18,5 +19,5 @@ for f=1:MeshNum.F
 end
 InitVal.f=InitBz;
 InitVal.e=zeros(MeshNum.E,1);
-disp('Gaussian_DeadCenter_triangle; ENDED')
+disp('GaussianDistributBz; ENDED')
 end

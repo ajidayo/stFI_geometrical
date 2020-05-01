@@ -76,7 +76,7 @@ end
 
 %% generate D for the boundary edges/faces and generate task-dependence graph
 
-disp('calculating task dependencies, D and Ctrans')
+disp('Constructing Taskdependence graph, D and Ctrans')
 % N.B. taskIdx =1,...,FItaskNum corresponds to FItask
 % and taskIdx =FItaskNum+1,... corresponds to p-calculation task
 %%%%%% DO use structures to represent tasks %%%%%
@@ -220,7 +220,7 @@ Taskorder=toposort(Taskdependence);
 
 clearvars Taskdependence s t
 
-disp('calculating Time Marching Matrix')
+disp('Constructing Time Marching Matrix')
 
 TMM_Intermidiate=spalloc(MeshNum.P,MeshNum.P,5*MeshNum.P);
 TMM_Intermidiate=TMM_Intermidiate+speye(MeshNum.P);

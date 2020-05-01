@@ -1,8 +1,7 @@
 function [sC,sG,UpdateNum,edgevec,first_pIdx,tilde_node_position,MeshNum,MeshParam]...
     = GenerateMesh_square_belt(UpdateNum_belt,MeshParam)
 
-
-disp('GenerateMesh_triangular:CALLED')
+disp('GenerateMesh_square_belt:CALLED')
 
 global DIM
 

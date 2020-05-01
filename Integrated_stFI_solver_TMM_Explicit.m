@@ -8,49 +8,53 @@ DIM=2; %number of spatial dimensions
 
 
 %% Spatial Meshing and Impedance for belt-like subgrid region with triangle faces 
-
-Img_MeshMeasLocation=imread('MeshMeasurements_triangle_belt.png');
-image(Img_MeshMeasLocation)
-MeshMeasurements=MeshMeasurements_100times100_withTriangle;
-MeshParam = MeshParameters_triangle_belt(MeshMeasurements);
-MeshParam.deltatriangle=0.1;
-MeshParam.deltaboundary=1.0/12.0;
-UpdateNum_belt=2;
-[sC,sG,UpdateNum,edgevec,first_pIdx,tilde_node_position,MeshNum,MeshParam] ...
-    = GenerateMesh_triangular_belt(UpdateNum_belt,MeshParam);
-
-first_i_triangle_scatterer=20;
-ImpedanceParam.freespace=1.0;
-ImpedanceParam.medium=0.01;
-Zinv_p ...
-    = Impedance_TriangleScatterer(ImpedanceParam,first_i_triangle_scatterer,sC,UpdateNum,first_pIdx,MeshNum,MeshParam);
-
-disp('Initial conditions: Gaussian Distribution of Bz, centered at the Dead center of the mesh')
-gauss_center.x=MeshParam.Size_X/2.0;
-gauss_center.y=0.5*(MeshParam.Fine_Y_from-1 ...
-    +(MeshParam.Fine_Y_to-MeshParam.Fine_Y_from+1)/2.0...
-    +(MeshParam.Size_Y-MeshParam.Fine_Y_to));
-
-%% Spatial Meshing and Impedance for belt-like subgrid region only with square faces
 % 
-% Img_MeshMeasLocation=imread('MeshMeasurements_square_belt.png');
+% Img_MeshMeasLocation=imread('MeshMeasurements_triangle_belt.png');
 % image(Img_MeshMeasLocation)
-% MeshMeasurements=MeshMeasurements_100times100_SquareBelt;
-% MeshParam = MeshParameters_square_belt(MeshMeasurements);
+% MeshMeasurements=MeshMeasurements_100times100_withTriangle;
+% MeshParam = MeshParameters_triangle_belt(MeshMeasurements);
+% MeshParam.deltatriangle=0.1;
 % MeshParam.deltaboundary=1.0/12.0;
 % UpdateNum_belt=2;
 % [sC,sG,UpdateNum,edgevec,first_pIdx,tilde_node_position,MeshNum,MeshParam] ...
-%     = GenerateMesh_square_belt(UpdateNum_belt,MeshParam);
+%     = GenerateMesh_triangular_belt(UpdateNum_belt,MeshParam);
 % 
+% first_i_triangle_scatterer=20;
 % ImpedanceParam.freespace=1.0;
 % ImpedanceParam.medium=0.01;
-% Zinv_p = ImpedanceParam.freespace*ones(MeshNum.P,1);
+% Zinv_p ...
+%     = Impedance_TriangleScatterer(ImpedanceParam,first_i_triangle_scatterer,sC,UpdateNum,first_pIdx,MeshNum,MeshParam);
 % 
 % disp('Initial conditions: Gaussian Distribution of Bz, centered at the Dead center of the mesh')
 % gauss_center.x=MeshParam.Size_X/2.0;
 % gauss_center.y=0.5*(MeshParam.Fine_Y_from-1 ...
 %     +(MeshParam.Fine_Y_to-MeshParam.Fine_Y_from+1)/2.0...
 %     +(MeshParam.Size_Y-MeshParam.Fine_Y_to));
+
+%% Spatial Meshing and Impedance for belt-like subgrid region only with square faces
+
+Img_MeshMeasLocation=imread('MeshMeasurements_square_belt.png');
+image(Img_MeshMeasLocation)
+MeshMeasurements=MeshMeasurements_100times100_SquareBelt_belt65to85;
+MeshParam = MeshParameters_square_belt(MeshMeasurements);
+MeshParam.deltaboundary=1.0/12.0;
+UpdateNum_belt=2;
+[sC,sG,UpdateNum,edgevec,first_pIdx,tilde_node_position,MeshNum,MeshParam] ...
+    = GenerateMesh_square_belt(UpdateNum_belt,MeshParam);
+
+ScattererMeasurements.FromXCoord=17;
+ScattererMeasurements.ToXCoord=33;
+ScattererMeasurements.FromYCoord=67;
+ScattererMeasurements.ToYCoord=83;
+ImpedanceParam.freespace=1.0;
+ImpedanceParam.medium=0.01;
+Zinv_p...
+    = Impedance_SquareScatterer(ImpedanceParam,ScattererMeasurements,sC,UpdateNum,first_pIdx,MeshNum,MeshParam,MeshMeasurements);
+disp('Initial conditions: Gaussian Distribution of Bz, centered at the Dead center of the mesh')
+gauss_center.x=MeshParam.Size_X/2.0;
+gauss_center.y=0.5*(MeshParam.Fine_Y_from-1 ...
+    +(MeshParam.Fine_Y_to-MeshParam.Fine_Y_from+1)/2.0...
+    +(MeshParam.Size_Y-MeshParam.Fine_Y_to));
 
 %% Calculate Constitutive Equation
 
