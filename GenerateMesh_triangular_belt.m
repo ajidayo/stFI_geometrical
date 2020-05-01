@@ -1,5 +1,5 @@
-function [sC,sG,denominator,edgevec,first_p,tilde_node_position,MeshNum,MeshParam]...
-    = GenerateMesh_triangular(denominator_obi,MeshParam)
+function [sC,sG,UpdateNum,edgevec,first_pIdx,tilde_node_position,MeshNum,MeshParam]...
+    = GenerateMesh_triangular_belt(UpdateNum_belt,MeshParam)
 
 disp('GenerateMesh_triangular:CALLED')
 
@@ -50,13 +50,13 @@ disp([MeshNum.F MeshNum.E MeshNum.N])
 %% Allocate Arrays
 sC=sparse(FNum,ENum);
 sG=sparse(ENum,NNum);
-denominator_node=zeros(NNum,1);
-denominator_edge=zeros(ENum,1);
-denominator_face=zeros(FNum,1);
-edge_vector=zeros(ENum,DIM);
+UpdateNum.n=zeros(NNum,1);
+UpdateNum.e=zeros(ENum,1);
+UpdateNum.f=zeros(FNum,1);
+edgevec=zeros(ENum,DIM);
 tilde_edge_vector=zeros(ENum,DIM);
-first_p_for_f=zeros(FNum,1);
-first_p_for_e=zeros(ENum,1);
+first_pIdx.f=zeros(FNum,1);
+first_pIdx.e=zeros(ENum,1);
 %first_Omega_for_f=zeros(FNum,1);
 %first_Omega_for_e=zeros(ENum,1);
 
@@ -1136,16 +1136,16 @@ end
 
 %%
 
-[row_sC,col_sC]=find(sC);
-[row_sG,col_sG]=find(sG);
+%[row_sC,col_sC]=find(sC);
+%[row_sG,col_sG]=find(sG);
 
 %% initializing edge_vector
 
 for j=1:MeshParam.Fine_Y_from-1
     for i=1:MeshParam.Size_X
         e=MeshParam.Size_X*(j-1)+i;
-        edge_vector(e,1)=1.0;
-        edge_vector(e,2)=0.0;
+        edgevec.prim(e).vec(1)=1.0;
+        edgevec.prim(e).vec(2)=0.0;
     end
 end
 
@@ -1153,26 +1153,26 @@ j=MeshParam.Fine_Y_from;
 for i=1:MeshParam.Size_X
     e=2*MeshParam.Size_X*(j-MeshParam.Fine_Y_from)+2*i-1 ...
         +MeshParam.coarse_ENum_X_former;
-    edge_vector(e,1)=0.5;
-    edge_vector(e,2)=1.0/6.0;
+    edgevec.prim(e).vec(1)=0.5;
+    edgevec.prim(e).vec(2)=1.0/6.0;
     
     e=2*MeshParam.Size_X*(j-MeshParam.Fine_Y_from)+2*i ...
         +MeshParam.coarse_ENum_X_former;
-    edge_vector(e,1)=0.5;
-    edge_vector(e,2)=-1.0/6.0;
+    edgevec.prim(e).vec(1)=0.5;
+    edgevec.prim(e).vec(2)=-1.0/6.0;
 end
 
 for j=MeshParam.Fine_Y_from+1:MeshParam.Triangle_Y_from-1
     for i=1:MeshParam.Size_X
         e=2*MeshParam.Size_X*(j-MeshParam.Fine_Y_from)+2*i-1 ...
             +MeshParam.coarse_ENum_X_former;
-        edge_vector(e,1)=0.5;
-        edge_vector(e,2)=0.0;
+        edgevec.prim(e).vec(1)=0.5;
+        edgevec.prim(e).vec(2)=0.0;
                
         e=2*MeshParam.Size_X*(j-MeshParam.Fine_Y_from)+2*i ...
             +MeshParam.coarse_ENum_X_former;
-        edge_vector(e,1)=0.5;
-        edge_vector(e,2)=0.0;
+        edgevec.prim(e).vec(1)=0.5;
+        edgevec.prim(e).vec(2)=0.0;
     end
 end
 
@@ -1180,48 +1180,48 @@ j=MeshParam.Triangle_Y_from;
 for i=1:MeshParam.Size_X
     e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i-3 ...
         +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-    edge_vector(e,1)=0.5;
-    edge_vector(e,2)=0.5;
+    edgevec.prim(e).vec(1)=0.5;
+    edgevec.prim(e).vec(2)=0.5;
     
     
     e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i-2 ...
         +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-    edge_vector(e,1)=0.5;
-    edge_vector(e,2)=-0.5*MeshParam.deltatriangle/(0.5-MeshParam.deltatriangle);  
+    edgevec.prim(e).vec(1)=0.5;
+    edgevec.prim(e).vec(2)=-0.5*MeshParam.deltatriangle/(0.5-MeshParam.deltatriangle);  
 
     
     e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i-1 ...
         +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-    edge_vector(e,1)=0.5;
-    edge_vector(e,2)=0.5*MeshParam.deltatriangle/(0.5-MeshParam.deltatriangle);
+    edgevec.prim(e).vec(1)=0.5;
+    edgevec.prim(e).vec(2)=0.5*MeshParam.deltatriangle/(0.5-MeshParam.deltatriangle);
     
     e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i ...
         +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-    edge_vector(e,1)=0.5;
-    edge_vector(e,2)=-0.5;  
+    edgevec.prim(e).vec(1)=0.5;
+    edgevec.prim(e).vec(2)=-0.5;  
 end
 
 for j=MeshParam.Triangle_Y_from+2:2:MeshParam.Triangle_Y_to-1
     for i=1:MeshParam.Size_X
         e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i-3 ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-        edge_vector(e,1)=0.5;
-        edge_vector(e,2)=0.5;
+        edgevec.prim(e).vec(1)=0.5;
+        edgevec.prim(e).vec(2)=0.5;
         
         e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i-2 ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-        edge_vector(e,1)=0.5;
-        edge_vector(e,2)=0.0;
+        edgevec.prim(e).vec(1)=0.5;
+        edgevec.prim(e).vec(2)=0.0;
         
         e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i-1 ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-        edge_vector(e,1)=0.5;
-        edge_vector(e,2)=0.0;
+        edgevec.prim(e).vec(1)=0.5;
+        edgevec.prim(e).vec(2)=0.0;
         
         e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-        edge_vector(e,1)=0.5;
-        edge_vector(e,2)=-0.5;
+        edgevec.prim(e).vec(1)=0.5;
+        edgevec.prim(e).vec(2)=-0.5;
     end
 end
 
@@ -1230,23 +1230,23 @@ for j=MeshParam.Triangle_Y_from+1:2:MeshParam.Triangle_Y_to
         
         e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i-3 ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-        edge_vector(e,1)=0.5;
-        edge_vector(e,2)=0.0;
+        edgevec.prim(e).vec(1)=0.5;
+        edgevec.prim(e).vec(2)=0.0;
 
         e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i-2 ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-        edge_vector(e,1)=0.5;
-        edge_vector(e,2)=-0.5;
+        edgevec.prim(e).vec(1)=0.5;
+        edgevec.prim(e).vec(2)=-0.5;
         
         e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i-1 ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-        edge_vector(e,1)=0.5;
-        edge_vector(e,2)=0.5;
+        edgevec.prim(e).vec(1)=0.5;
+        edgevec.prim(e).vec(2)=0.5;
         
         e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-        edge_vector(e,1)=0.5;
-        edge_vector(e,2)=0.0;
+        edgevec.prim(e).vec(1)=0.5;
+        edgevec.prim(e).vec(2)=0.0;
     end
 end
 
@@ -1254,26 +1254,26 @@ j=MeshParam.Triangle_Y_to+1;
 for i=1:MeshParam.Size_X
     e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i-1 ...
         +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former+MeshParam.triangle_ENum_XandDiag;
-    edge_vector(e,1)=0.5;
-    edge_vector(e,2)=0.5*MeshParam.deltatriangle/(0.5-MeshParam.deltatriangle);
+    edgevec.prim(e).vec(1)=0.5;
+    edgevec.prim(e).vec(2)=0.5*MeshParam.deltatriangle/(0.5-MeshParam.deltatriangle);
     
     e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i ...
         +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former+MeshParam.triangle_ENum_XandDiag;
-    edge_vector(e,1)=0.5;
-    edge_vector(e,2)=-0.5*MeshParam.deltatriangle/(0.5-MeshParam.deltatriangle);
+    edgevec.prim(e).vec(1)=0.5;
+    edgevec.prim(e).vec(2)=-0.5*MeshParam.deltatriangle/(0.5-MeshParam.deltatriangle);
 end
 
 for j=MeshParam.Triangle_Y_to+2:MeshParam.Fine_Y_to
     for i=1:MeshParam.Size_X
         e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i-1 ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former+MeshParam.triangle_ENum_XandDiag;
-        edge_vector(e,1)=0.5;
-        edge_vector(e,2)=0.0;
+        edgevec.prim(e).vec(1)=0.5;
+        edgevec.prim(e).vec(2)=0.0;
         
         e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former+MeshParam.triangle_ENum_XandDiag;
-        edge_vector(e,1)=0.5;
-        edge_vector(e,2)=0.0;
+        edgevec.prim(e).vec(1)=0.5;
+        edgevec.prim(e).vec(2)=0.0;
     end
 end
 
@@ -1281,14 +1281,14 @@ j=MeshParam.Fine_Y_to+1;
 for i=1:MeshParam.Size_X
     e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i-1 ...
         +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former+MeshParam.triangle_ENum_XandDiag;
-    edge_vector(e,1)=0.5;
-    edge_vector(e,2)=-1.0/6.0;
+    edgevec.prim(e).vec(1)=0.5;
+    edgevec.prim(e).vec(2)=-1.0/6.0;
     
     
     e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i ...
         +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former+MeshParam.triangle_ENum_XandDiag;
-    edge_vector(e,1)=0.5;
-    edge_vector(e,2)=1.0/6.0;
+    edgevec.prim(e).vec(1)=0.5;
+    edgevec.prim(e).vec(2)=1.0/6.0;
 end
 
 
@@ -1296,8 +1296,8 @@ for j=MeshParam.Fine_Y_to+2:MeshParam.Size_Y
     for i=1:MeshParam.Size_X
         e=MeshParam.Size_X*(j-MeshParam.Fine_Y_to-2)+i ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former+MeshParam.triangle_ENum_XandDiag+MeshParam.fine_ENum_X_latter;
-        edge_vector(e,1)=1.0;
-        edge_vector(e,2)=0.0;
+        edgevec.prim(e).vec(1)=1.0;
+        edgevec.prim(e).vec(2)=0.0;
     end
 end
 
@@ -1307,8 +1307,8 @@ for j=1:MeshParam.Fine_Y_from-2
     for i=1:MeshParam.Size_X
         e=MeshParam.Size_X*(j-1)+i ...
             +MeshParam.ENum_XandDiag;
-        edge_vector(e,1)=0.0;
-        edge_vector(e,2)=1.0;
+        edgevec.prim(e).vec(1)=0.0;
+        edgevec.prim(e).vec(2)=1.0;
     end
 end
 
@@ -1316,34 +1316,34 @@ j=MeshParam.Fine_Y_from-1;
 for i=1:MeshParam.Size_X
     e=MeshParam.Size_X*(j-1)+i ...
         +MeshParam.ENum_XandDiag;
-    edge_vector(e,1)=0.0;
-    edge_vector(e,2)=1.0-MeshParam.deltaboundary;
+    edgevec.prim(e).vec(1)=0.0;
+    edgevec.prim(e).vec(2)=1.0-MeshParam.deltaboundary;
 end
 
 j=MeshParam.Fine_Y_from;
 for i=1:MeshParam.Size_X
     e=2*MeshParam.Size_X*(j-MeshParam.Fine_Y_from)+2*i-1 ...
         +MeshParam.coarse_ENum_Y_former+MeshParam.ENum_XandDiag;
-    edge_vector(e,1)=0.0;
-    edge_vector(e,2)=0.5+MeshParam.deltaboundary;
+    edgevec.prim(e).vec(1)=0.0;
+    edgevec.prim(e).vec(2)=0.5+MeshParam.deltaboundary;
     
     e=2*MeshParam.Size_X*(j-MeshParam.Fine_Y_from)+2*i ...
         +MeshParam.coarse_ENum_Y_former+MeshParam.ENum_XandDiag;
-    edge_vector(e,1)=0.0;
-    edge_vector(e,2)=0.5-1.0/6.0+MeshParam.deltaboundary;
+    edgevec.prim(e).vec(1)=0.0;
+    edgevec.prim(e).vec(2)=0.5-1.0/6.0+MeshParam.deltaboundary;
 end
 
 for j=MeshParam.Fine_Y_from+1:MeshParam.Triangle_Y_from-1
     for i=1:MeshParam.Size_X
         e=2*MeshParam.Size_X*(j-MeshParam.Fine_Y_from)+2*i-1 ...
             +MeshParam.coarse_ENum_Y_former+MeshParam.ENum_XandDiag;
-        edge_vector(e,1)=0.0;
-        edge_vector(e,2)=0.5;
+        edgevec.prim(e).vec(1)=0.0;
+        edgevec.prim(e).vec(2)=0.5;
         
         e=2*MeshParam.Size_X*(j-MeshParam.Fine_Y_from)+2*i ...
             +MeshParam.coarse_ENum_Y_former+MeshParam.ENum_XandDiag;
-        edge_vector(e,1)=0.0;
-        edge_vector(e,2)=0.5;
+        edgevec.prim(e).vec(1)=0.0;
+        edgevec.prim(e).vec(2)=0.5;
         
     end    
 end
@@ -1353,20 +1353,20 @@ j=MeshParam.Triangle_Y_from-1;
 for i=1:MeshParam.Size_X    
     e=2*MeshParam.Size_X*(j-MeshParam.Fine_Y_from)+2*i ...
         +MeshParam.coarse_ENum_Y_former+MeshParam.ENum_XandDiag;
-    edge_vector(e,2)=edge_vector(e,2)-0.5*MeshParam.deltatriangle*(0.5-MeshParam.deltatriangle);
+    edgevec.prim(e).vec(2)=edgevec.prim(e).vec(2)-0.5*MeshParam.deltatriangle*(0.5-MeshParam.deltatriangle);
 end
 
 for j=MeshParam.Triangle_Y_from:MeshParam.Triangle_Y_to
     for i=1:MeshParam.Size_X
         e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+2*i-1 ...
             +MeshParam.coarse_ENum_Y_former+MeshParam.fine_ENum_Y_former+MeshParam.ENum_XandDiag;
-        edge_vector(e,1)=0.0;
-        edge_vector(e,2)=0.5;
+        edgevec.prim(e).vec(1)=0.0;
+        edgevec.prim(e).vec(2)=0.5;
         
         e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+2*i ...
             +MeshParam.coarse_ENum_Y_former+MeshParam.fine_ENum_Y_former+MeshParam.ENum_XandDiag;
-        edge_vector(e,1)=0.0;
-        edge_vector(e,2)=0.5;  
+        edgevec.prim(e).vec(1)=0.0;
+        edgevec.prim(e).vec(2)=0.5;  
     end
 end
 
@@ -1375,7 +1375,7 @@ j=MeshParam.Triangle_Y_from;
 for i=1:MeshParam.Size_X
     e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+2*i ...
         +MeshParam.coarse_ENum_Y_former+MeshParam.fine_ENum_Y_former+MeshParam.ENum_XandDiag;
-    edge_vector(e,2)=edge_vector(e,2)+0.5*MeshParam.deltatriangle*(0.5-MeshParam.deltatriangle);
+    edgevec.prim(e).vec(2)=edgevec.prim(e).vec(2)+0.5*MeshParam.deltatriangle*(0.5-MeshParam.deltatriangle);
 end
 
 % adjustment for row j=MeshParam.Triangle_Y_to;
@@ -1383,33 +1383,33 @@ j=MeshParam.Triangle_Y_to;
 for i=1:MeshParam.Size_X
     e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+2*i ...
         +MeshParam.coarse_ENum_Y_former+MeshParam.fine_ENum_Y_former+MeshParam.ENum_XandDiag;
-    edge_vector(e,2)=edge_vector(e,2)+0.5*MeshParam.deltatriangle*(0.5-MeshParam.deltatriangle);
+    edgevec.prim(e).vec(2)=edgevec.prim(e).vec(2)+0.5*MeshParam.deltatriangle*(0.5-MeshParam.deltatriangle);
 end
 
 j=MeshParam.Triangle_Y_to+1;
 for i=1:MeshParam.Size_X
     e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i-1 ...
         +MeshParam.coarse_ENum_Y_former+MeshParam.fine_ENum_Y_former+MeshParam.triangle_ENum_Y+MeshParam.ENum_XandDiag;
-    edge_vector(e,1)=0.0;
-    edge_vector(e,2)=0.5;
+    edgevec.prim(e).vec(1)=0.0;
+    edgevec.prim(e).vec(2)=0.5;
     
     e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i ...
         +MeshParam.coarse_ENum_Y_former+MeshParam.fine_ENum_Y_former+MeshParam.triangle_ENum_Y+MeshParam.ENum_XandDiag;
-    edge_vector(e,1)=0.0;
-    edge_vector(e,2)=0.5-0.5*MeshParam.deltatriangle*(0.5-MeshParam.deltatriangle);
+    edgevec.prim(e).vec(1)=0.0;
+    edgevec.prim(e).vec(2)=0.5-0.5*MeshParam.deltatriangle*(0.5-MeshParam.deltatriangle);
 end
 
 for j=MeshParam.Triangle_Y_to+2:MeshParam.Fine_Y_to
     for i=1:MeshParam.Size_X
         e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i-1 ...
             +MeshParam.coarse_ENum_Y_former+MeshParam.fine_ENum_Y_former+MeshParam.triangle_ENum_Y+MeshParam.ENum_XandDiag;
-        edge_vector(e,1)=0.0;
-        edge_vector(e,2)=0.5;
+        edgevec.prim(e).vec(1)=0.0;
+        edgevec.prim(e).vec(2)=0.5;
         
         e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i ...
             +MeshParam.coarse_ENum_Y_former+MeshParam.fine_ENum_Y_former+MeshParam.triangle_ENum_Y+MeshParam.ENum_XandDiag;
-        edge_vector(e,1)=0.0;
-        edge_vector(e,2)=0.5;
+        edgevec.prim(e).vec(1)=0.0;
+        edgevec.prim(e).vec(2)=0.5;
     end
 end
 
@@ -1418,27 +1418,27 @@ j=MeshParam.Fine_Y_to;
 for i=1:MeshParam.Size_X
     e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i-1 ...
         +MeshParam.coarse_ENum_Y_former+MeshParam.fine_ENum_Y_former+MeshParam.triangle_ENum_Y+MeshParam.ENum_XandDiag;
-    edge_vector(e,2)=edge_vector(e,2)+MeshParam.deltaboundary;
+    edgevec.prim(e).vec(2)=edgevec.prim(e).vec(2)+MeshParam.deltaboundary;
     
     e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i ...
         +MeshParam.coarse_ENum_Y_former+MeshParam.fine_ENum_Y_former+MeshParam.triangle_ENum_Y+MeshParam.ENum_XandDiag;
-    edge_vector(e,2)=edge_vector(e,2)-1.0/6.0+MeshParam.deltaboundary;
+    edgevec.prim(e).vec(2)=edgevec.prim(e).vec(2)-1.0/6.0+MeshParam.deltaboundary;
 end
 
 j=MeshParam.Fine_Y_to+1;
 for i=1:MeshParam.Size_X
     e=MeshParam.Size_X*(j-MeshParam.Fine_Y_to-1)+i ...
         +MeshParam.coarse_ENum_Y_former+MeshParam.fine_ENum_Y_former+MeshParam.triangle_ENum_Y+MeshParam.fine_ENum_Y_latter+MeshParam.ENum_XandDiag;
-    edge_vector(e,1)=0.0;
-    edge_vector(e,2)=1.0-MeshParam.deltaboundary;
+    edgevec.prim(e).vec(1)=0.0;
+    edgevec.prim(e).vec(2)=1.0-MeshParam.deltaboundary;
 end
 
 for j=MeshParam.Fine_Y_to+2:MeshParam.Size_Y
     for i=1:MeshParam.Size_X
         e=MeshParam.Size_X*(j-MeshParam.Fine_Y_to-1)+i ...
             +MeshParam.coarse_ENum_Y_former+MeshParam.fine_ENum_Y_former+MeshParam.triangle_ENum_Y+MeshParam.fine_ENum_Y_latter+MeshParam.ENum_XandDiag;
-       edge_vector(e,1)=0.0;
-       edge_vector(e,2)=1.0;
+       edgevec.prim(e).vec(1)=0.0;
+       edgevec.prim(e).vec(2)=1.0;
     end
 end
 
@@ -1447,8 +1447,8 @@ end
 for j=1:MeshParam.Fine_Y_from-1
     for i=1:MeshParam.Size_X
         e=MeshParam.Size_X*(j-1)+i;
-        tilde_edge_vector(e,1)=0.0;
-        tilde_edge_vector(e,2)=1.0;
+        edgevec.dual(e).vec(1)=0.0;
+        edgevec.dual(e).vec(2)=1.0;
     end
 end
 
@@ -1456,26 +1456,26 @@ j=MeshParam.Fine_Y_from;
 for i=1:MeshParam.Size_X
     e=2*MeshParam.Size_X*(j-MeshParam.Fine_Y_from)+2*i-1 ...
         +MeshParam.coarse_ENum_X_former;
-    tilde_edge_vector(e,1)=-0.25;
-    tilde_edge_vector(e,2)=0.75;
+    edgevec.dual(e).vec(1)=-0.25;
+    edgevec.dual(e).vec(2)=0.75;
     
     e=2*MeshParam.Size_X*(j-MeshParam.Fine_Y_from)+2*i ...
         +MeshParam.coarse_ENum_X_former;
-    tilde_edge_vector(e,1)=0.25;
-    tilde_edge_vector(e,2)=0.75;
+    edgevec.dual(e).vec(1)=0.25;
+    edgevec.dual(e).vec(2)=0.75;
 end
 
 for j=MeshParam.Fine_Y_from+1:MeshParam.Triangle_Y_from-1
     for i=1:MeshParam.Size_X
         e=2*MeshParam.Size_X*(j-MeshParam.Fine_Y_from)+2*i-1 ...
             +MeshParam.coarse_ENum_X_former;
-        tilde_edge_vector(e,1)=0.0;
-        tilde_edge_vector(e,2)=0.5;
+        edgevec.dual(e).vec(1)=0.0;
+        edgevec.dual(e).vec(2)=0.5;
         
         e=2*MeshParam.Size_X*(j-MeshParam.Fine_Y_from)+2*i ...
             +MeshParam.coarse_ENum_X_former;
-        tilde_edge_vector(e,1)=0.0;
-        tilde_edge_vector(e,2)=0.5;
+        edgevec.dual(e).vec(1)=0.0;
+        edgevec.dual(e).vec(2)=0.5;
     end
 end
 
@@ -1483,46 +1483,46 @@ j=MeshParam.Triangle_Y_from;
 for i=1:MeshParam.Size_X
     e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i-3 ...
         +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-    tilde_edge_vector(e,1)=-2*MeshParam.deltatriangle;
-    tilde_edge_vector(e,2)=2*MeshParam.deltatriangle;  
+    edgevec.dual(e).vec(1)=-2*MeshParam.deltatriangle;
+    edgevec.dual(e).vec(2)=2*MeshParam.deltatriangle;  
 
     e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i-2 ...
         +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-    tilde_edge_vector(e,1)=MeshParam.deltatriangle;
-    tilde_edge_vector(e,2)=0.5-MeshParam.deltatriangle;
+    edgevec.dual(e).vec(1)=MeshParam.deltatriangle;
+    edgevec.dual(e).vec(2)=0.5-MeshParam.deltatriangle;
 
     e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i-1 ...
         +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-    tilde_edge_vector(e,1)=-MeshParam.deltatriangle;
-    tilde_edge_vector(e,2)=0.5-MeshParam.deltatriangle;  
+    edgevec.dual(e).vec(1)=-MeshParam.deltatriangle;
+    edgevec.dual(e).vec(2)=0.5-MeshParam.deltatriangle;  
     
     e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i ...
         +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-    tilde_edge_vector(e,1)=2*MeshParam.deltatriangle;
-    tilde_edge_vector(e,2)=2*MeshParam.deltatriangle;  
+    edgevec.dual(e).vec(1)=2*MeshParam.deltatriangle;
+    edgevec.dual(e).vec(2)=2*MeshParam.deltatriangle;  
 end
 
 for j=MeshParam.Triangle_Y_from+2:2:MeshParam.Triangle_Y_to-1
     for i=1:MeshParam.Size_X
         e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i-3 ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-        tilde_edge_vector(e,1)=-2*MeshParam.deltatriangle;
-        tilde_edge_vector(e,2)=2*MeshParam.deltatriangle;
+        edgevec.dual(e).vec(1)=-2*MeshParam.deltatriangle;
+        edgevec.dual(e).vec(2)=2*MeshParam.deltatriangle;
         
         e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i-2 ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-        tilde_edge_vector(e,1)=0.0;
-        tilde_edge_vector(e,2)=0.5-2*MeshParam.deltatriangle;
+        edgevec.dual(e).vec(1)=0.0;
+        edgevec.dual(e).vec(2)=0.5-2*MeshParam.deltatriangle;
         
         e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i-1 ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-        tilde_edge_vector(e,1)=0.0;
-        tilde_edge_vector(e,2)=0.5-2*MeshParam.deltatriangle;
+        edgevec.dual(e).vec(1)=0.0;
+        edgevec.dual(e).vec(2)=0.5-2*MeshParam.deltatriangle;
         
         e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-        tilde_edge_vector(e,1)=2*MeshParam.deltatriangle;
-        tilde_edge_vector(e,2)=2*MeshParam.deltatriangle;
+        edgevec.dual(e).vec(1)=2*MeshParam.deltatriangle;
+        edgevec.dual(e).vec(2)=2*MeshParam.deltatriangle;
     end
 end
 
@@ -1531,24 +1531,24 @@ for j=MeshParam.Triangle_Y_from+1:2:MeshParam.Triangle_Y_to
         
         e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i-3 ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-        tilde_edge_vector(e,1)=0.0;
-        tilde_edge_vector(e,2)=0.5-2*MeshParam.deltatriangle;
+        edgevec.dual(e).vec(1)=0.0;
+        edgevec.dual(e).vec(2)=0.5-2*MeshParam.deltatriangle;
 
         e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i-2 ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-        tilde_edge_vector(e,1)=2*MeshParam.deltatriangle;
-        tilde_edge_vector(e,2)=2*MeshParam.deltatriangle;
+        edgevec.dual(e).vec(1)=2*MeshParam.deltatriangle;
+        edgevec.dual(e).vec(2)=2*MeshParam.deltatriangle;
         
         e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i-1 ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-        tilde_edge_vector(e,1)=-2*MeshParam.deltatriangle;
-        tilde_edge_vector(e,2)=2*MeshParam.deltatriangle;
+        edgevec.dual(e).vec(1)=-2*MeshParam.deltatriangle;
+        edgevec.dual(e).vec(2)=2*MeshParam.deltatriangle;
 
         
         e=4*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+4*i ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former;
-        tilde_edge_vector(e,1)=0.0;
-        tilde_edge_vector(e,2)=0.5-2*MeshParam.deltatriangle;
+        edgevec.dual(e).vec(1)=0.0;
+        edgevec.dual(e).vec(2)=0.5-2*MeshParam.deltatriangle;
     end
 end
 
@@ -1557,27 +1557,27 @@ j=MeshParam.Triangle_Y_to+1;
 for i=1:MeshParam.Size_X
     e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i-1 ...
         +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former+MeshParam.triangle_ENum_XandDiag;
-    tilde_edge_vector(e,1)=-MeshParam.deltatriangle;
-    tilde_edge_vector(e,2)=0.5-MeshParam.deltatriangle;
+    edgevec.dual(e).vec(1)=-MeshParam.deltatriangle;
+    edgevec.dual(e).vec(2)=0.5-MeshParam.deltatriangle;
     
     e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i ...
         +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former+MeshParam.triangle_ENum_XandDiag;
-    tilde_edge_vector(e,1)=MeshParam.deltatriangle;
-    tilde_edge_vector(e,2)=0.5-MeshParam.deltatriangle;
+    edgevec.dual(e).vec(1)=MeshParam.deltatriangle;
+    edgevec.dual(e).vec(2)=0.5-MeshParam.deltatriangle;
 end
 
 for j=MeshParam.Triangle_Y_to+2:MeshParam.Fine_Y_to
     for i=1:MeshParam.Size_X
         e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i-1 ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former+MeshParam.triangle_ENum_XandDiag;
-        tilde_edge_vector(e,1)=0.0;
-        tilde_edge_vector(e,2)=0.5;
+        edgevec.dual(e).vec(1)=0.0;
+        edgevec.dual(e).vec(2)=0.5;
         
         
         e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former+MeshParam.triangle_ENum_XandDiag;
-        tilde_edge_vector(e,1)=0.0;
-        tilde_edge_vector(e,2)=0.5;
+        edgevec.dual(e).vec(1)=0.0;
+        edgevec.dual(e).vec(2)=0.5;
     end
 end
 
@@ -1585,14 +1585,14 @@ j=MeshParam.Fine_Y_to+1;
 for i=1:MeshParam.Size_X
     e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i-1 ...
         +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former+MeshParam.triangle_ENum_XandDiag;
-    tilde_edge_vector(e,1)=0.25;
-    tilde_edge_vector(e,2)=0.75;
+    edgevec.dual(e).vec(1)=0.25;
+    edgevec.dual(e).vec(2)=0.75;
     
     
     e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i ...
         +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former+MeshParam.triangle_ENum_XandDiag;
-    tilde_edge_vector(e,1)=-0.25;
-    tilde_edge_vector(e,2)=0.75;
+    edgevec.dual(e).vec(1)=-0.25;
+    edgevec.dual(e).vec(2)=0.75;
 end
 
 
@@ -1600,8 +1600,8 @@ for j=MeshParam.Fine_Y_to+2:MeshParam.Size_Y
     for i=1:MeshParam.Size_X
         e=MeshParam.Size_X*(j-MeshParam.Fine_Y_to-2)+i ...
             +MeshParam.coarse_ENum_X_former+MeshParam.fine_ENum_X_former+MeshParam.triangle_ENum_XandDiag+MeshParam.fine_ENum_X_latter;
-        tilde_edge_vector(e,1)=0.0;
-        tilde_edge_vector(e,2)=1.0;
+        edgevec.dual(e).vec(1)=0.0;
+        edgevec.dual(e).vec(2)=1.0;
     end
 end
 
@@ -1611,8 +1611,8 @@ for j=1:MeshParam.Fine_Y_from-1
     for i=1:MeshParam.Size_X
         e=MeshParam.Size_X*(j-1)+i ...
             +MeshParam.ENum_XandDiag;
-        tilde_edge_vector(e,1)=-1.0;
-        tilde_edge_vector(e,2)=0.0;
+        edgevec.dual(e).vec(1)=-1.0;
+        edgevec.dual(e).vec(2)=0.0;
     end
 end
 
@@ -1620,13 +1620,13 @@ for j=MeshParam.Fine_Y_from:MeshParam.Triangle_Y_from-1
     for i=1:MeshParam.Size_X
         e=2*MeshParam.Size_X*(j-MeshParam.Fine_Y_from)+2*i-1 ...
             +MeshParam.coarse_ENum_Y_former+MeshParam.ENum_XandDiag;
-        tilde_edge_vector(e,1)=-0.5;
-        tilde_edge_vector(e,2)=0.0;
+        edgevec.dual(e).vec(1)=-0.5;
+        edgevec.dual(e).vec(2)=0.0;
         
         e=2*MeshParam.Size_X*(j-MeshParam.Fine_Y_from)+2*i ...
             +MeshParam.coarse_ENum_Y_former+MeshParam.ENum_XandDiag;
-        tilde_edge_vector(e,1)=-0.5;
-        tilde_edge_vector(e,2)=0.0;
+        edgevec.dual(e).vec(1)=-0.5;
+        edgevec.dual(e).vec(2)=0.0;
         
     end    
 end
@@ -1635,13 +1635,13 @@ for j=MeshParam.Triangle_Y_from:MeshParam.Triangle_Y_to
     for i=1:MeshParam.Size_X
         e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+2*i-1 ...
             +MeshParam.coarse_ENum_Y_former+MeshParam.fine_ENum_Y_former+MeshParam.ENum_XandDiag;
-        tilde_edge_vector(e,1)=-(0.5-2*MeshParam.deltatriangle);
-        tilde_edge_vector(e,2)=0.0;
+        edgevec.dual(e).vec(1)=-(0.5-2*MeshParam.deltatriangle);
+        edgevec.dual(e).vec(2)=0.0;
         
         e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_from)+2*i ...
             +MeshParam.coarse_ENum_Y_former+MeshParam.fine_ENum_Y_former+MeshParam.ENum_XandDiag;
-        tilde_edge_vector(e,1)=-(0.5-2*MeshParam.deltatriangle);
-        tilde_edge_vector(e,2)=0.0;  
+        edgevec.dual(e).vec(1)=-(0.5-2*MeshParam.deltatriangle);
+        edgevec.dual(e).vec(2)=0.0;  
     end
 end
 
@@ -1649,13 +1649,13 @@ for j=MeshParam.Triangle_Y_to+1:MeshParam.Fine_Y_to
     for i=1:MeshParam.Size_X
         e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i-1 ...
             +MeshParam.coarse_ENum_Y_former+MeshParam.fine_ENum_Y_former+MeshParam.triangle_ENum_Y+MeshParam.ENum_XandDiag;
-        tilde_edge_vector(e,1)=-0.5;
-        tilde_edge_vector(e,2)=0.0;
+        edgevec.dual(e).vec(1)=-0.5;
+        edgevec.dual(e).vec(2)=0.0;
         
         e=2*MeshParam.Size_X*(j-MeshParam.Triangle_Y_to-1)+2*i ...
             +MeshParam.coarse_ENum_Y_former+MeshParam.fine_ENum_Y_former+MeshParam.triangle_ENum_Y+MeshParam.ENum_XandDiag;
-        tilde_edge_vector(e,1)=-0.5;
-        tilde_edge_vector(e,2)=0.0;
+        edgevec.dual(e).vec(1)=-0.5;
+        edgevec.dual(e).vec(2)=0.0;
     end
 end
 
@@ -1663,8 +1663,8 @@ for j=MeshParam.Fine_Y_to+1:MeshParam.Size_Y
     for i=1:MeshParam.Size_X
         e=MeshParam.Size_X*(j-MeshParam.Fine_Y_to-1)+i ...
             +MeshParam.coarse_ENum_Y_former+MeshParam.fine_ENum_Y_former+MeshParam.triangle_ENum_Y+MeshParam.fine_ENum_Y_latter+MeshParam.ENum_XandDiag;
-       tilde_edge_vector(e,1)=-1.0;
-       tilde_edge_vector(e,2)=0.0;
+       edgevec.dual(e).vec(1)=-1.0;
+       edgevec.dual(e).vec(2)=0.0;
     end
 end
 
@@ -1776,59 +1776,59 @@ end
 
 %% initializing denominators
 for f=1:MeshParam.coarse_FNum_former
-    denominator_face(f)=1;
+    UpdateNum.f(f)=1;
 end
 for f=MeshParam.coarse_FNum_former+1:MeshParam.coarse_FNum_former+MeshParam.fine_FNum_former+MeshParam.triangle_FNum+MeshParam.fine_FNum_latter
-    denominator_face(f)=denominator_obi;
+    UpdateNum.f(f)=UpdateNum_belt;
 end
 for f=MeshParam.coarse_FNum_former+MeshParam.fine_FNum_former+MeshParam.triangle_FNum+MeshParam.fine_FNum_latter+1:FNum
-    denominator_face(f)=1;
+    UpdateNum.f(f)=1;
 end
 
 
-% genrate denominator_edge,denominator_node
+% genrate UpdateNum.e,UpdateNum.n
 % can be prosessed in parallel
 for e=1:ENum
-    denominator_edge(e)=0;
+    UpdateNum.e(e)=0;
 end
 for kk=1:size(row_sC,1)
     f=row_sC(kk);
     e=col_sC(kk);
     %disp(e)
     %i=0;
-    if denominator_edge(e)<denominator_face(f)
-        denominator_edge(e)=denominator_face(f);
+    if UpdateNum.e(e)<UpdateNum.f(f)
+        UpdateNum.e(e)=UpdateNum.f(f);
         %i=i+1;
     end
 end
 for kk=1:size(row_sG,1)
     e=row_sG(kk);
     n=col_sG(kk);
-    if denominator_node(n)<denominator_edge(e)
-        denominator_node(n)=denominator_edge(e);
+    if UpdateNum.n(n)<UpdateNum.e(e)
+        UpdateNum.n(n)=UpdateNum.e(e);
     end
 end
-% end denominator_edge, denominator_node
+% end UpdateNum.e, UpdateNum.n
 
 %% generate st faces
 %disp('generating st faces')
 p=1;
 %Omega=1;
 for f=1:FNum
-    first_p_for_f(f)=p;
+    first_pIdx.f(f)=p;
     %first_Omega_for_f(f)=Omega;
     %l(p)=0;
-    p=p+denominator_face(f)+1;
-    %Omega=Omega+denominator_face(f);
+    p=p+UpdateNum.f(f)+1;
+    %Omega=Omega+UpdateNum.f(f);
 end
 %OmegaNum=Omega-1;
 %Omega=1;
 for e=1:ENum
-    first_p_for_e(e)=p;
+    first_pIdx.e(e)=p;
     %first_Omega_for_e(e)=Omega;
     %l(p)=0;
-    p=p+denominator_edge(e)+1;
-    %Omega=Omega+denominator_edge(e);
+    p=p+UpdateNum.e(e)+1;
+    %Omega=Omega+UpdateNum.e(e);
 end
 %OmegaDualNum=Omega-1;
 PNum=p-1;
@@ -1836,23 +1836,6 @@ PNum=p-1;
 MeshNum.P=PNum;
 
 %% END
-%sC,sG
-denominator.n=denominator_node;
-denominator.e=denominator_edge;
-denominator.f=denominator_face;
-
-for e=1:MeshNum.E
-    edgevec.prim(e).vec=edge_vector(e,:).';
-end
-for e=1:MeshNum.E
-    edgevec.dual(e).vec=tilde_edge_vector(e,:).';
-end
-first_p.f=first_p_for_f;
-first_p.e=first_p_for_e;
-%first_omega.f=first_Omega_for_f;
-%first_omega.e=first_Omega_for_e;
-
-%tilde_node_position;
  
 disp('GenerateMesh_triangular:STOPPED')
 

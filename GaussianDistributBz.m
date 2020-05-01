@@ -1,16 +1,7 @@
 function [InitVal] ...
-    =Gaussian_DeadCenter(GaussParam,tilde_node_position,b_area,MeshNum,MeshParam)
+    =GaussianDistributBz(GaussParam,tilde_node_position,b_area,MeshNum,gauss_center)
 %% gaussian distribution parameters
 
-
-% dead center
-
-gauss_center.x=MeshParam.Size_X/2.0;
-gauss_center.y=0.5*(MeshParam.Fine_Y_from-1 ...
-    +(MeshParam.Fine_Y_to-MeshParam.Fine_Y_from+1)/2.0...
-    +(MeshParam.Size_Y-MeshParam.Fine_Y_to));
-
-disp('Initial conditions: Gaussian Distribution of Bz, centered at the Dead center of the mesh')
 disp('A sigma =')
 disp([GaussParam.Ampl GaussParam.relaxfact])
 disp('x_o y_o =')
