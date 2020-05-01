@@ -1,6 +1,5 @@
 clear;
 
-
 global EPSILON
 global DIM
 
@@ -10,14 +9,9 @@ DIM=2; %number of spatial dimensions
 Location_MeshMeas=imread('MeshMeasurements.png');
 image(Location_MeshMeas)
 
-MeshMeasurements.XCoord=100;
-MeshMeasurements.YCoord=100;
-MeshMeasurements.FineStartAtYCoord=65;
-MeshMeasurements.TriangleStartAtYCoord=66;
-MeshMeasurements.TriangleEndAtYCoord=84;
-MeshMeasurements.FineEndAtYCoord=85;
+MeshMeasurements=MeshMeasurements_100times100_withTriangle;
 
-[MeshParam]=Parameters_Mesh(MeshMeasurements);
+[MeshParam] = Parameters_Mesh(MeshMeasurements);
 MeshParam.deltatriangle=0.1;
 MeshParam.deltaboundary=1.0/12.0;
 
