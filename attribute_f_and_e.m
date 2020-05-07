@@ -1,6 +1,8 @@
 function [att] ...
     =attribute_f_and_e(sC,sG,UpdateNum,MeshNum)
 
+disp('attribute_f_and_e: CALLED')
+
 global EPSILON
 
 % allocate attribute vector
@@ -14,15 +16,14 @@ AdjE=logical(sG*sG.');
 
 %disp('checkpoint alpha')
 
-for e_target=1:MeshNum.E    
+for e_tar=1:MeshNum.E    
     %%%%%% CAPSULIZE FROM %%%%%%
-    sC_e_target=sC(:,e_target);
-    row_sC_e_target=find(sC_e_target);
+    row_sC_e_tar=find(sC(:,e_tar));
     % check boundary-attribute
     check_bound=0.0;
-    for ff=1:size(row_sC_e_target,1)
-        f=row_sC_e_target(ff);
-        check_bound=check_bound+sC(f,e_target)*UpdateNum.f(f);
+    for ff=1:size(row_sC_e_tar,1)
+        f=row_sC_e_tar(ff);
+        check_bound=check_bound+sC(f,e_tar)*UpdateNum.f(f);
     end
     if abs(check_bound)<EPSILON % not a boundary
          continue;
@@ -32,10 +33,10 @@ for e_target=1:MeshNum.E
     %disp(e_target)
     
     % if e_target is a dt-varying boundary
-    att.e.boundaryedge(e_target)=true;
+    att.e.boundaryedge(e_tar)=true;
     % for all f incident to e_target
-    for ff=1:size(row_sC_e_target,1)
-        f=row_sC_e_target(ff);
+    for ff=1:size(row_sC_e_tar,1)
+        f=row_sC_e_tar(ff);
         att.f.inc_bounde(f)=true;
     end
 end % for e_target
@@ -45,17 +46,33 @@ allIdx_bound_e=find(att_bound_e==true);
 
 for ee=1:size(allIdx_bound_e,1)
     e_bound=allIdx_bound_e(ee);
-    AdjE_e_bound=AdjE(e_bound,:);
-    col_AdjE_e_bound=find(AdjE_e_bound);
+    col_AdjE_e_bound=find(AdjE(e_bound,:));
     for eee=1:size(col_AdjE_e_bound,2)
-        e_target=col_AdjE_e_bound(eee);
-        if att.e.boundaryedge(e_target)==false
-            att.e.adj_bounde(e_target)=true;
+        e_tar=col_AdjE_e_bound(eee);
+        if att.e.boundaryedge(e_tar)==false
+            att.e.adj_bounde(e_tar)=true;
         end
     end
 end % for e_target
 
 clearvars AdjE
+
+for e_tar=1:MeshNum.E
+    if att.e.adj_bounde(e_tar)==false
+        continue
+    end
+    row_sC_e_tar=find(sC(:,e_tar));    
+    % for all f incident to e s.t. adj to boundary edges
+    for ff=1:size(row_sC_e_tar,1)
+        f=row_sC_e_tar(ff);
+        if att.f.inc_bounde(f)==true
+            continue
+        end
+        disp('outer-corner face found ')
+        att.f.inc_bounde(f)=true;
+    end
+end % for e_tar
+
 
 %disp('checkpoint bravo')
 
@@ -76,5 +93,5 @@ for ff=1:size(allIdx_stFI_f,1)
         end
     end
 end
-
+disp('attribute_f_and_e: ENDED')
 end

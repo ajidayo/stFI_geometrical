@@ -1,6 +1,6 @@
 function [kappa,b_area,att,MeshNum] ...
     =Constitutive(cdt,sC,sG,UpdateNum,edgevec,first_pIdx,att,MeshNum)
-disp('Constitutive: CALLED')
+%disp('Constitutive: CALLED')
 
 global EPSILON
 global DIM
@@ -12,6 +12,7 @@ exception=0;% dummy
 %endpoints_tilde_e=zeros(2,1);
 
 att.e.nonorthogonal=logical(sparse(MeshNum.E,1));
+att.e.corner=logical(sparse(MeshNum.E,1));
 for e_tar=1:MeshNum.E
    if DirectionVecPrim(e_tar,edgevec).'*DirectionVecDual(e_tar,edgevec)>EPSILON
        disp(['nonorthogonal edge found:e=',num2str(e_tar),...
@@ -48,7 +49,7 @@ clearvars Dummy
 
 
 %% calculate kappa for boundary edges
-disp('calculating kappa for boundary edges')
+%disp('calculating kappa for boundary edges')
 for e_tar=1:MeshNum.E
     if att.e.boundaryedge(e_tar)==false || att.e.nonorthogonal(e_tar)==true
          continue;
@@ -62,14 +63,14 @@ for e_tar=1:MeshNum.E
         UpdNum_e_tar=UpdateNum.e(e_tar);
         p_tar=first_pIdx.e(e_tar);        
 
-        endpoints_e = endpoint(e_tar,sG);
-        endpoints_etilde=find(row_sC_e_tar);
+        endpoints_e_tar = endpoint(e_tar,sG);
+        endpoints_e_tar_tilde=find(row_sC_e_tar);
 
         DirVec_e_tar=DirectionVecPrim(e_tar,edgevec);
         %DirVec_etilde_tar=DirectionVecDual(e_tar,edgevec);
                 
-        e_connec_to_ep1=e_connec2ntar_shareincfwith_e_tar(endpoints_e(1),e_tar,sC,sG,edgevec);
-        e_connec_to_ep2=e_connec2ntar_shareincfwith_e_tar(endpoints_e(2),e_tar,sC,sG,edgevec);
+        e_connec_to_ep1=e_connec2ntar_shareincfwith_e_tar(endpoints_e_tar(1),e_tar,sC,sG,edgevec);
+        e_connec_to_ep2=e_connec2ntar_shareincfwith_e_tar(endpoints_e_tar(2),e_tar,sC,sG,edgevec);
 
         % correct directions of vec_e1c, vec_e2c: the direction is the same
         % as the direction of edgevec.dual.(the direction of g, or tilde e)
@@ -86,7 +87,9 @@ for e_tar=1:MeshNum.E
         else
             % maybe corner of the subgrid
             disp(['error; Cannot define DirVec_NodeDelta for e_tar = ', num2str(e_tar)])
-        end  
+            att.e.corner(e_tar)=true;
+            continue
+        end
         costheta=DirVec_NodeDelta.'*DirVec_e_tar;
         sintheta=sqrt(1-costheta^2);
         
@@ -95,12 +98,131 @@ for e_tar=1:MeshNum.E
             timing_p_target=(timesection-0.5)/UpdNum_e_tar;
             Length_e_tar=sqrt(edgevec.prim(e_tar).vec.'*edgevec.prim(e_tar).vec);
             Area_p_tar=Length_e_tar*cdt/UpdNum_e_tar;
-            Length_tilde_e=sqrt(edgevec.dual(e_tar).vec.'*edgevec.dual(e_tar).vec);
-            kappa(p_tar) = Length_tilde_e/Area_p_tar;
+            Length_tilde_e_tar=sqrt(edgevec.dual(e_tar).vec.'*edgevec.dual(e_tar).vec);
+            kappa(p_tar) = Length_tilde_e_tar/Area_p_tar;
             
-            stn_FutureEdge_ep1=first_stn_n(endpoints_e(1))+timesection;
-            stn_FutureEdge_ep2=first_stn_n(endpoints_e(2))+timesection;
+            stn_FutureEdge_ep1=first_stn_n(endpoints_e_tar(1))+timesection;
+            stn_FutureEdge_ep2=first_stn_n(endpoints_e_tar(2))+timesection;
             
+            UdNf1=UpdateNum.f(endpoints_e_tar_tilde(1));
+            % calculate difference_time
+            for j=1:UdNf1
+                % can be written without if
+                if (1.0/UdNf1)*(j-1)< timing_p_target && timing_p_target < (1.0/UdNf1)*j
+                    timing_ep1tilde=(1.0/UdNf1)*(j-0.5);
+                    break;
+                end
+            end
+            UdNf2=UpdateNum.f(endpoints_e_tar_tilde(1));
+            for j=1:UdNf2
+                if (1.0d0/UdNf2)*(j-1)< timing_p_target && timing_p_target < (1.0d0/UdNf2)*j
+                    timing_ep2tilde=(1.0/UdNf2)*(j-0.5);
+                    break;
+                end
+            end
+            
+            DeltaTime_etilde=cdt*(...
+                sC(endpoints_e_tar_tilde(1),e_tar)*timing_ep1tilde+sC(endpoints_e_tar_tilde(2),e_tar)*timing_ep2tilde);
+            DeltaArea=DeltaTime_etilde/kappa(p_tar); % N.B. delta_area has sign
+            delta_position=DeltaArea/(Length_e_tar*sintheta);          
+            stnInfo(stn_FutureEdge_ep1).NodeDeltaVec=...
+                stnInfo(stn_FutureEdge_ep1).NodeDeltaVec+delta_position*DirVec_NodeDelta;
+            stnInfo(stn_FutureEdge_ep2).NodeDeltaVec=...
+                stnInfo(stn_FutureEdge_ep2).NodeDeltaVec+delta_position*DirVec_NodeDelta;
+            
+            LorenzInvariant_dS(p_tar)=-Length_tilde_e_tar^2+DeltaTime_etilde^2;
+            kappa(p_tar)=sign(LorenzInvariant_dS(p_tar))*kappa(p_tar);            
+        end 
+        LorenzInvariant_dS(p_tar-UpdNum_e_tar)=LorenzInvariant_dS(p_tar);
+        kappa(p_tar-UpdNum_e_tar)=kappa(p_tar);
+    end % if 
+end
+%% calculate kappa for corners
+
+for e_tar=1:MeshNum.E
+    if att.e.boundaryedge(e_tar)==false || att.e.corner(e_tar)==false
+         continue;
+    end
+    UpdNum_e_tar=UpdateNum.e(e_tar);
+    p_tar=first_pIdx.e(e_tar);
+        
+    endpoints_e_tar = endpoint(e_tar,sG);
+    % find stn from which we fetch NodeDeltaVec
+    e_adjto_e_tar = find(sG(e_tar,:)*sG.');
+    for ee=1:size(e_adjto_e_tar,2) % all adjacent edges
+        e = e_adjto_e_tar(ee);
+        if att.e.corner(e)==false
+            endpoints_e = endpoint(e,sG);
+            for ep=1:2
+                if sG(e_tar,endpoints_e(ep))~=0
+                    nfetch=endpoints_e(ep);
+                end
+            end
+        end
+    end  
+    for timesection=1:UpdNum_e_tar
+        p_tar=p_tar+1;
+        stn_FutureEdge_ep1=first_stn_n(endpoints_e_tar(1))+timesection;
+        stn_FutureEdge_ep2=first_stn_n(endpoints_e_tar(2))+timesection;
+        stn_FutureEdge_nfetch=first_stn_n(nfetch)+timesection;
+        stnInfo(stn_FutureEdge_ep1).NodeDeltaVec=...
+            stnInfo(stn_FutureEdge_nfetch).NodeDeltaVec;
+        stnInfo(stn_FutureEdge_ep2).NodeDeltaVec=...
+            stnInfo(stn_FutureEdge_nfetch).NodeDeltaVec;
+    end
+end
+
+for e_tar=1:MeshNum.E
+    if att.e.boundaryedge(e_tar)==false || att.e.corner(e_tar)==false
+         continue;
+    end
+    UpdNum_e_tar=UpdateNum.e(e_tar);
+    p_tar=first_pIdx.e(e_tar);
+    
+    endpoints_e = endpoint(e_tar,sG);
+    endpoints_etilde=find(row_sC_e_tar);
+        
+    for timesection=1:UpdNum_e_tar
+            p_tar=p_tar+1;
+            timing_p_target=(timesection-0.5)/UpdNum_e_tar;
+
+            for ep =1:2
+                if sG(e_tar,endpoints_e(ep))==-1
+                    nstart=endpoints_e(ep);
+                else 
+                    ntarget=endpoints_e(ep);
+                end
+            end
+            stn_FutureEdge_nstart=first_stn_n(nstart)+timesection;
+            stn_FutureEdge_ntarget=first_stn_n(ntarget)+timesection;
+            stn_PastEdge_nstart=first_stn_n(nstart)+timesection-1;
+            stn_PastEdge_ntarget=first_stn_n(ntarget)+timesection-1;
+            
+            Futureedgevec_prim_e_tar = edgevec.prim(e_tar);
+            Pastedgevec_prim_e_tar = edgevec.prim(e_tar);
+            Futureedgevec_prim_e_tar=Futureedgevec_prim_e_tar...
+                +stnInfo(stn_FutureEdge_nstart).NodeDeltaVec...
+                +stnInfo(stn_FutureEdge_ntarget).NodeDeltaVec;
+            Patsedgevec_prim_e_tar=Pastedgevec_prim_e_tar...
+                +stnInfo(  stn_PastEdge_nstart).NodeDeltaVec...
+                +stnInfo(  stn_PastEdge_ntarget).NodeDeltaVec;
+
+            OrthogLength_FtrEdge ...
+                =Futureedgevec_prim_e_tar.'*[0 1;-1 0]*DirectionVecDual(e_tar,edgevec);
+            OrthogLength_PstEdge ...
+                =  Patsedgevec_prim_e_tar.'*[0 1;-1 0]*DirectionVecDual(e_tar,edgevec);
+            stP = 0.5*(OrthogLength_FtrEdge+OrthogLength_PstEdge)*cdt/UpdNum_e_tar; 
+          
+            ssP = ...
+                abs(Pastedgevec_prim_e_tar.'*[0 1;-1 0]*...
+                ( stnInfo(stn_FutureEdge_nstart).NodeDeltaVec...
+                - stnInfo(  stn_PastEdge_nstart).NodeDeltaVec)...
+                ) + abs(-Futureedgevec_prim_e_tar.'*[0 1;-1 0]*...
+                ( stnInfo(  stn_PastEdge_ntarget).NodeDeltaVec )...
+                - stnInfo(stn_FutureEdge_ntarget).NodeDeltaVec...
+                );
+            P = [stP;ssP];
+
             UdNf1=UpdateNum.f(endpoints_etilde(1));
             % calculate difference_time
             for j=1:UdNf1
@@ -117,28 +239,26 @@ for e_tar=1:MeshNum.E
                     break;
                 end
             end
-            
             DeltaTime_etilde=cdt*(...
                 sC(endpoints_etilde(1),e_tar)*timing_ep1tilde+sC(endpoints_etilde(2),e_tar)*timing_ep2tilde);
-            DeltaArea=DeltaTime_etilde/kappa(p_tar); % N.B. delta_area has sign
-            delta_position=DeltaArea/(Length_e_tar*sintheta);          
-            stnInfo(stn_FutureEdge_ep1).NodeDeltaVec=...
-                stnInfo(stn_FutureEdge_ep1).NodeDeltaVec+delta_position*DirVec_NodeDelta;
-            stnInfo(stn_FutureEdge_ep2).NodeDeltaVec=...
-                stnInfo(stn_FutureEdge_ep2).NodeDeltaVec+delta_position*DirVec_NodeDelta;
-            
-            LorenzInvariant_dS(p_tar)=-Length_tilde_e^2+DeltaTime_etilde^2;
-            kappa(p_tar)=sign(LorenzInvariant_dS(p_tar))*kappa(p_tar);            
-        end 
-        LorenzInvariant_dS(p_tar-UpdNum_e_tar)=LorenzInvariant_dS(p_tar);
-        kappa(p_tar-UpdNum_e_tar)=kappa(p_tar);
-    end % if 
-end
-%% calculate kappa for non-orthogonal boundary edges (corners)
+            edgevec_dual_e_tar = edgevec.dual(e_tar);
+            Length_tilde_e = edgevec_dual_e_tar.'*edgevec_dual_e_tar;
+            Direction_tildeP = [DeltaTime_etilde;Length_tilde_e];
+            Direction_tildeP = (1.0/sqrt(Direction_tildeP.'*Direction_tildeP))...
+             *Direction_tildeP;
+         
+            Area_p_tar=P.'*Direction_tildeP;
+            kappa(p_tar) = sqrt(Direction_tildeP.'*Direction_tildeP)/Area_p_tar;
 
+            LorenzInvariant_dS(p_tar)=-Length_tilde_e^2+DeltaTime_etilde^2;
+            kappa(p_tar)=sign(LorenzInvariant_dS(p_tar))*kappa(p_tar);
+    end
+    LorenzInvariant_dS(p_tar-UpdNum_e_tar)=LorenzInvariant_dS(p_tar);
+    kappa(p_tar-UpdNum_e_tar)=kappa(p_tar);
+end
 
 %% calculate kappa for non-boundary edges
-disp('calculating kappa for non-boundary edges')
+%disp('calculating kappa for non-boundary edges')
 for e_tar=1:MeshNum.E  
     if att.e.boundaryedge(e_tar)==true
          continue;
@@ -185,7 +305,7 @@ for e_tar=1:MeshNum.E
 end % loop for e_target
 
 %% calculate kappa for non-boundary faces
-disp('calculating kappa for faces')
+%disp('calculating kappa for faces')
 for f_tar=1:MeshNum.F
    
     if exception==1
@@ -208,7 +328,7 @@ end %  f_tar
 
 %% STOP
 
-disp('Constitutive:ENDED')
+%disp('Constitutive:ENDED')
 
 
 end
@@ -389,4 +509,5 @@ while true
     
 end % while for the boundary edges of f_target
 Area_p_tar=abs(Area_p_tar);
+%disp('Constitutive: ENDED')
 end

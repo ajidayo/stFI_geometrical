@@ -1,6 +1,6 @@
 function [subG_bin,subG_sizes,allIdx_stFI,UpdateNum] ...
     = Divide_into_induced_subgraphs(sC,UpdateNum,MeshNum,att)
-disp('Divide_into_induced_subgraphs:CALLED')
+%disp('Divide_into_induced_subgraphs:CALLED')
 
 %global EPSILON
 
@@ -210,5 +210,5 @@ clearvars allIdx_bound_e allIdx_adjbounde_e
 % return allIdx_stFI_f allIdx_stFI_e
 
 %disp('checkpoint golf')
-disp('Divide_into_induced_subgraphs:ENDED')
+%disp('Divide_into_induced_subgraphs:ENDED')
 end

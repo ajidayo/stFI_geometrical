@@ -1,7 +1,7 @@
 function [Taskorder,task,D,Ctrans] ...
-    = Obtain_TaskOrderandIncMat(kappaoverZ,sC,UpdateNum,allIdx_stFI,subG_bin,subG_sizes,att,first_pIdx,MeshNum)
+    = Obtain_TaskOrderandIncMat(sC,UpdateNum,allIdx_stFI,subG_bin,subG_sizes,att,first_pIdx,MeshNum)
 
-disp('Obtain_TMM_Explicit: CALLED')
+disp('Obtain_TaskOrderandIncMat: CALLED')
 
 % this unit generates the explicit time-marching matrix combining the
 % space-time and spatial FI formulation.
@@ -76,7 +76,7 @@ end
 
 %% generate D for the boundary edges/faces and generate task-dependence graph
 
-disp('Constructing Taskdependence graph, D and Ctrans')
+%disp('Constructing Taskdependence graph, D and Ctrans')
 % N.B. taskIdx =1,...,FItaskNum corresponds to FItask
 % and taskIdx =FItaskNum+1,... corresponds to p-calculation task
 %%%%%% DO use structures to represent tasks %%%%%
@@ -122,8 +122,8 @@ for ff=1:size(allIdx_stFI.f,1)
                    s(edgecounter)=offset_FItask(subG_bin.e(e))+j;
                    %[f,e,p_s] %disp
                elseif att.e.adj_bounde(e)==true || att.e.boundaryedge(e)==true
-                   [s(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
-                       = semi_add_dep_edge(p_s,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,false);
+                   [s(edgecounter),taskIdx_for_p,taskIdx_newest,task]...
+                       = semi_add_dep_edge(p_s,taskIdx_for_p,taskIdx_newest,task,false);
                    %[f,e,p_s] %disp
                else
                    disp('error')
@@ -131,8 +131,8 @@ for ff=1:size(allIdx_stFI.f,1)
                    pause
                end
                p_t=first_pIdx.f(f)+i;
-               [t(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
-                   = semi_add_dep_edge(p_t,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,false);
+               [t(edgecounter),taskIdx_for_p,taskIdx_newest,task]...
+                   = semi_add_dep_edge(p_t,taskIdx_for_p,taskIdx_newest,task,false);
                D(omega, p_s)=sC(f,e);
            end % j
        end % ee
@@ -175,11 +175,11 @@ for ee=1:size(allIdx_stFI.e,1)
                if UpdateNum.e(e)*j==UpdateNum.f(f)*i
                    edgecounter=edgecounter+1;
                    p_s=first_pIdx.f(f)+j;
-                   [s(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
-                       = semi_add_dep_edge(p_s,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,p_s_is_init);
+                   [s(edgecounter),taskIdx_for_p,taskIdx_newest,task]...
+                       = semi_add_dep_edge(p_s,taskIdx_for_p,taskIdx_newest,task,p_s_is_init);
                    p_t=first_pIdx.e(e)+i+1;
-                   [t(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
-                       = semi_add_dep_edge(p_t,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,false);
+                   [t(edgecounter),taskIdx_for_p,taskIdx_newest,task]...
+                       = semi_add_dep_edge(p_t,taskIdx_for_p,taskIdx_newest,task,false);
                    Ctrans(omega,p_s)=sC(f,e);
                    break;
                end %if
@@ -212,88 +212,10 @@ Taskdependence = addedge(Taskdependence,s,t);
 % the transformation is alike to that in "planB"
 % cf. Obtain_TimemarchingMatrix_Explicit_planB
 
-disp('Calculating orders')
+% disp('Calculating orders')
 
 Taskorder=toposort(Taskdependence);
 %Taskorder=toposort(Taskdependence,'Order','stable');
 
-clearvars Taskdependence s t
-
-
-%% Constructing Time Marching Matrix
-disp('Constructing Time Marching Matrix')
-
-TMM_Intermidiate=spalloc(MeshNum.P,MeshNum.P,5*MeshNum.P);
-TMM_Intermidiate=TMM_Intermidiate+speye(MeshNum.P);
-
-%disp("checkpoint charlie-2")
-
-for taskIdx=1:taskNum
-    %disp(taskIdx)
-    task_tgt=Taskorder(taskIdx);
-    if task(task_tgt).typ == "InitVal"
-        continue
-    elseif task(task_tgt).typ == "FI"
-%        disp('FI')
-        SG_tgt = SG_for_FItask(task_tgt);
-        Timesection_tgt = Timesection_for_FItask(task_tgt);
-        % call FI for SG_tgt, Timesection_tgt
-        TMM_Intermidiate= ...
-            TMM_FI_onestep(SG_tgt,Timesection_tgt,sC,kappaoverZ,subG_bin.f,subG_bin.e,first_pIdx)...
-            *TMM_Intermidiate;
-       % T=TMM_FI_onestep(SG_tgt,Timesection_tgt,sC,kappatimesz,subG_bin.f,subG_bin.e,first_p);
-    elseif task(task_tgt).typ=="stFI"
-        %disp('stFI')
-        p_tgt = p_for_taskIdx(task_tgt);
-        omega_tgt = omega_for_taskIdx(task_tgt);
-        % call stFI for p_tgt, Omega_to_calculate
-        TMM_Intermidiate= ...
-            TMM_stFI_single_p(p_tgt, omega_tgt, D_tildeD_Zinv) ...
-            * TMM_Intermidiate;
-    else
-        disp('error: task-type undefined')
-        pause
-    end
+disp('Obtain_TaskOrderandIncMat:ENDED')
 end
-
-clearvars Taskorder
-
-
-%disp('checkpoint delta')
-
-
-%% generate TMM_Explicit
-% Note that the (intermidiate?) variables are already bypassed in
-% TMM_Intermidiate.
-% For p which is an (intermidiate?) variable, delete the p-th row.
-
-Store=logical(sparse([],[],[],MeshNum.F+MeshNum.E,MeshNum.P,MeshNum.F+MeshNum.E));
-for f=1:MeshNum.F
-    p_tgt=first_pIdx.f(f)+UpdateNum.f(f);
-    Store(f,p_tgt)=true;
-end 
-for e=1:MeshNum.E
-    p_tgt=first_pIdx.e(e)+UpdateNum.e(e);
-    Store(MeshNum.F+e,p_tgt)=true;
-end
-Store_Init=logical(sparse([],[],[],MeshNum.F+MeshNum.E,MeshNum.P,MeshNum.F+MeshNum.E));
-for f=1:MeshNum.F
-    p_tgt=first_pIdx.f(f);
-    Store_Init(f,p_tgt)=true;
-end 
-for e=1:MeshNum.E
-    p_tgt=first_pIdx.e(e);
-    Store_Init(MeshNum.F+e,p_tgt)=true;
-end
-
-TMM_Explicit = Store*TMM_Intermidiate*Store_Init.';
-
-clearvars TMM_Intermidiate
-
-% return TMM_Explicit Store (clearvars -except TMM_Explicit Store)
-
-disp('TMM_Explicit calculated')
-
-%disp('checkpoint echo')
-
-disp('Obtain_TMM_Explicit: ENDED')

@@ -1,5 +1,5 @@
-function [s_or_t,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
-    = semi_add_dep_edge(p,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,p_is_init)
+function [s_or_t,taskIdx_for_p,taskIdx_newest,task]...
+    = semi_add_dep_edge(p,taskIdx_for_p,taskIdx_newest,task,p_is_init)
 if taskIdx_for_p(p)==0
     taskIdx_newest=taskIdx_newest+1;
     s_or_t=taskIdx_newest;

@@ -2,9 +2,13 @@ clear;
 
 global EPSILON
 global DIM
+global DISPDEBUGGINGMESSAGE
+global DOEIGVANALYSIS
 
 EPSILON = 10^(-7);
 DIM = 2; %number of spatial dimensions
+DISPDEBUGGINGMESSAGE = true;
+DOEIGVANALYSIS =true;
 
 %% Spatial Meshing and Impedance for belt-like subgrid region with triangle faces 
 
@@ -65,9 +69,9 @@ UpdateNum_belt=2;
 ImpedanceParam.freespace=1.0;
 ImpedanceParam.medium=1.0;
 %ImpedanceParam.medium=0.01;
-
-Zinv_p...
-    = Impedance_SquareScatterer(ImpedanceParam,ScattererMeasurements,sC,UpdateNum,first_pIdx,MeshNum,MeshParam,MeshMeasurements);
+%Zinv_p=ones(MeshNum.P,1);
+ Zinv_p...
+     = Impedance_SquareScatterer(ImpedanceParam,ScattererMeasurements,sC,UpdateNum,first_pIdx,MeshNum,MeshParam,MeshMeasurements);
 disp('Initial conditions: Gaussian Distribution of Bz, centered at the Dead center of the mesh')
 gauss_center.x=MeshParam.Size_X/2.0;
 gauss_center.y=0.5*(MeshParam.Fine_Y_from-1 ...
@@ -79,13 +83,15 @@ gauss_center.y=0.5*(MeshParam.Fine_Y_from-1 ...
 % Future tasks; modify att into nested structures like att.e(e).bound
 att = attribute_f_and_e(sC,sG,UpdateNum, MeshNum);
 
-cdt=0.41;
+cdt=0.6250;
 
 % Future tasks; adapt Constitutive to partially non-orthogonal grids:DONE
 % but not been tested yet
 % Future tasks; adapt Constitutive to subgrid corners
 % Future tasks; utilize spatial-FI-like calculation in Constitutive
+disp('Constitutive: CALLING')
 [kappa,b_area,att,MeshNum] = Constitutive(cdt,sC,sG,UpdateNum,edgevec,first_pIdx,att,MeshNum);
+disp('Constitutive: ENDED')
 kappaoverZ=kappa.*Zinv_p;
 
 %% calculating initial distribution
@@ -99,22 +105,29 @@ InitVal ...
 %% Obtain Time-marching Matrix 
 
 % #4: combine both space-time and spatial FI in order to make the size of D small
+disp('Divide_into_induced_subgraphs:CALLING')
 [subG_bin,subG_sizes,allIdx_stFI,UpdateNum] ...
     = Divide_into_induced_subgraphs(sC,UpdateNum,MeshNum,att);
+disp('Divide_into_induced_subgraphs:ENDED')
 
 % task: allocate TMM beforehand to reduce overheads
-[TMM_Explicit] ...
-    = Obtain_TMM_Explicit(kappaoverZ,sC,UpdateNum,allIdx_stFI,subG_bin,subG_sizes,att,first_pIdx,MeshNum);
+[Taskorder,task,D,Ctrans] ...
+    = Obtain_TaskOrderandIncMat(sC,UpdateNum,allIdx_stFI,subG_bin,subG_sizes,att,first_pIdx,MeshNum);
 
 D_tildeD_Zinv=[D;Ctrans * spdiags(kappaoverZ,0,MeshNum.P,MeshNum.P)];
 clearvars D Ctrans
+
+disp('Construct_TMM_Explicit:CALLING')
+[TMM_Explicit] ...
+    = Construct_TMM_Explicit(Taskorder,task,D_tildeD_Zinv,kappaoverZ,sC,UpdateNum,subG_bin,first_pIdx,MeshNum);
+disp('Construct_TMM_Explicit:ENDED')
 
 %% Execute Explicit Calculation 
 
 time=0;
 variables_f_then_e=[InitVal.f; InitVal.e];
 
-number_of_steps=100
+number_of_steps=100000
 
 CalPeriod=cdt * number_of_steps;
 disp(['Executing Calculation: from ct = ',num2str(time), ' to ct = ',num2str(time+CalPeriod)])
@@ -128,17 +141,29 @@ disp(['plotting Bz at ct = ', num2str(time)])
 plot_bface_general(b_f,b_area,tilde_node_position,MeshParam,MeshNum)
 
 %% Eigenvalue Analysis
-
-eigenvalues = eigs(TMM_Explicit,2,'largestabs','Tolerance',1e-3);
-figure
-plot(eigenvalues)
-IdxUnstabEigVal=find(abs(eigenvalues)>1+10^(-4));
-if size(IdxUnstabEigVal,1)==0
-    disp(['stable for cdt = ',num2str(cdt),'(EPSILON = ',num2str(10^(-4)),')'])
-else
-    disp(['unstable for cdt = ',num2str(cdt),'(EPSILON = ',num2str(10^(-4)),')'])
+if DOEIGVANALYSIS 
+    disp('Calculating Eigenvalues')
+    
+    eigenvalues = eigs(TMM_Explicit,100,'largestabs');
+    figure
+    theta = linspace(0,2*pi);
+    x = cos(theta);
+    y = sin(theta);
+    eigv_re=real(eigenvalues);
+    eigv_im=imag(eigenvalues);
+    plot(eigv_re,eigv_im,'or',x,y,'-b')
+    axis equal
+    EigValAbs=abs(eigenvalues);
+    EigvEpsilon=10^(-7);
+    IdxUnstabEigVal=find(EigValAbs>1+EigvEpsilon);
+    if size(IdxUnstabEigVal,1)==0
+        disp(['stable for cdt = ',num2str(cdt),' (EPSILON = ',num2str(EigvEpsilon),')'])
+        %disp(EigValAbs)
+    else
+        disp(['unstable for cdt = ',num2str(cdt),' (EPSILON = ',num2str(EigvEpsilon),')'])
+        %disp(EigValAbs)
+    end
 end
-
 
 %% Error to Conventional stFI
 
