@@ -1,5 +1,5 @@
-function [TMM_Explicit] ...
-    = Obtain_TMM_Explicit(kappaoverZ,sC,UpdateNum,allIdx_stFI,subG_bin,subG_sizes,att,first_pIdx,MeshNum)
+function [Taskorder,task,D,Ctrans] ...
+    = Obtain_TaskOrderandIncMat(kappaoverZ,sC,UpdateNum,allIdx_stFI,subG_bin,subG_sizes,att,first_pIdx,MeshNum)
 
 disp('Obtain_TMM_Explicit: CALLED')
 
@@ -28,8 +28,8 @@ for SGIdx=1:size(subG_sizes.f,2)
     for i=1:UpdateNum.SG(SGIdx)
         FItask=FItask+1;
         task(FItask).typ="FI";
-        SG_for_FItask(FItask)=SGIdx;
-        Timesection_for_FItask(FItask)=i;
+        task(FItask).SG_tgt=SGIdx;
+        task(FItask).Tsec_tgt=i;
         if i>=2
             edgecounter=edgecounter+1;
             s(edgecounter)=FItask-1;
@@ -39,7 +39,7 @@ for SGIdx=1:size(subG_sizes.f,2)
 end
 
 taskIdx_for_p = sparse(MeshNum.P,1);% gives the taskIdx corresponding to the calculation of p
-p_for_taskIdx = sparse(FItaskNum,1);% gives the p corresponding to taskIdx
+%p_for_taskIdx = sparse(FItaskNum,1);% gives the p corresponding to taskIdx
 % (iff taskIdx=1,...,FItaskNum, equals zero)
 omega_for_taskIdx = sparse(FItaskNum,1);% gives the omega corresponding to each taskIdx
 % (iff taskIdx=1,...,FItaskNum, equals zero)
@@ -64,8 +64,8 @@ for ee=1:size(allIdx_bound_SG_e,1) %SGboundary edges
                 end
                 FItask_tgt=offset_FItask(SG_tgt)+i;
                 p_s=first_pIdx.f(f)+i-1;
-                [s(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
-                    = semi_add_dep_edge(p_s,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,p_is_init);               
+                [s(edgecounter),taskIdx_for_p,taskIdx_newest,task]...
+                    = semi_add_dep_edge(p_s,taskIdx_for_p,taskIdx_newest,task,p_is_init);               
                 t(edgecounter)=FItask_tgt;
             end
         end
@@ -104,14 +104,14 @@ for ff=1:size(allIdx_stFI.f,1)
            p_s_is_init=false;
        end
        p_s=first_pIdx.f(f)+i-1;
-       [s(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
-           = semi_add_dep_edge(p_s,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,p_s_is_init);
+       [s(edgecounter),taskIdx_for_p,taskIdx_newest,task]...
+           = semi_add_dep_edge(p_s,taskIdx_for_p,taskIdx_newest,task,p_s_is_init);
        p_t=first_pIdx.f(f)+i;
-       [t(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
-           = semi_add_dep_edge(p_t,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,false      );
+       [t(edgecounter),taskIdx_for_p,taskIdx_newest,task]...
+           = semi_add_dep_edge(p_t,taskIdx_for_p,taskIdx_newest,task,false      );
        D(omega,p_s)=-1;
        D(omega,p_t)= 1; %the variable to be calculated at line Omega
-       omega_for_taskIdx(taskIdx_for_p(p_t))=omega;
+       task(taskIdx_for_p(p_t)).omega_tgt=omega;
        for ee=1:size(col_sC_f,2)
            e=col_sC_f(ee);
            r_e_over_f=UpdateNum.e(e)/UpdateNum.f(f);
@@ -156,14 +156,14 @@ for ee=1:size(allIdx_stFI.e,1)
        omega=omega+1;
        edgecounter=edgecounter+1;
        p_s=first_pIdx.e(e)+i;
-       [s(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
-           = semi_add_dep_edge(p_s,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,p_s_is_init);
+       [s(edgecounter),taskIdx_for_p,taskIdx_newest,task]...
+           = semi_add_dep_edge(p_s,taskIdx_for_p,taskIdx_newest,task,p_s_is_init);
        p_t=first_pIdx.e(e)+i+1;
-       [t(edgecounter),taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task]...
-           = semi_add_dep_edge(p_t,taskIdx_for_p,p_for_taskIdx,taskIdx_newest,task,false);
+       [t(edgecounter),taskIdx_for_p,taskIdx_newest,task]...
+           = semi_add_dep_edge(p_t,taskIdx_for_p,taskIdx_newest,task,false);
        Ctrans(omega,p_s)=-1;
        Ctrans(omega,p_t)=1; %the variable to be calculated at line Omega
-       omega_for_taskIdx(taskIdx_for_p(p_t))=omega+OmegaNum;
+       task(taskIdx_for_p(p_t)).omega_tgt=omega+OmegaNum;
        for ff=1:size(row_sC_e,1)
            f=row_sC_e(ff);
            % for debugging
@@ -194,10 +194,9 @@ taskNum = taskIdx_newest;
 
 % omega is the row-index of D_tildeD_Zinverse; 
 % each omega corresponds to an calculation of stFI variable
-D_tildeD_Zinv=[D;Ctrans * spdiags(kappaoverZ,0,MeshNum.P,MeshNum.P)];
-
+%D_tildeD_Zinv=[D;Ctrans * spdiags(kappaoverZ,0,MeshNum.P,MeshNum.P)];
 %clearvars taskIdx_for_p
-clearvars D Ctrans
+%clearvars D Ctrans
 
 %disp('checkpoint charlie')
 
@@ -220,6 +219,8 @@ Taskorder=toposort(Taskdependence);
 
 clearvars Taskdependence s t
 
+
+%% Constructing Time Marching Matrix
 disp('Constructing Time Marching Matrix')
 
 TMM_Intermidiate=spalloc(MeshNum.P,MeshNum.P,5*MeshNum.P);

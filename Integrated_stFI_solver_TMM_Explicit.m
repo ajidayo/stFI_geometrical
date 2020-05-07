@@ -3,12 +3,11 @@ clear;
 global EPSILON
 global DIM
 
-EPSILON=10^(-7);
-DIM=2; %number of spatial dimensions
-
+EPSILON = 10^(-7);
+DIM = 2; %number of spatial dimensions
 
 %% Spatial Meshing and Impedance for belt-like subgrid region with triangle faces 
-% 
+
 % Img_MeshMeasLocation=imread('MeshMeasurements_triangle_belt.png');
 % image(Img_MeshMeasLocation)
 % MeshMeasurements=MeshMeasurements_100times100_withTriangle;
@@ -18,13 +17,13 @@ DIM=2; %number of spatial dimensions
 % UpdateNum_belt=2;
 % [sC,sG,UpdateNum,edgevec,first_pIdx,tilde_node_position,MeshNum,MeshParam] ...
 %     = GenerateMesh_triangular_belt(UpdateNum_belt,MeshParam);
-% 
+
 % first_i_triangle_scatterer=20;
 % ImpedanceParam.freespace=1.0;
 % ImpedanceParam.medium=0.01;
 % Zinv_p ...
 %     = Impedance_TriangleScatterer(ImpedanceParam,first_i_triangle_scatterer,sC,UpdateNum,first_pIdx,MeshNum,MeshParam);
-% 
+
 % disp('Initial conditions: Gaussian Distribution of Bz, centered at the Dead center of the mesh')
 % gauss_center.x=MeshParam.Size_X/2.0;
 % gauss_center.y=0.5*(MeshParam.Fine_Y_from-1 ...
@@ -35,19 +34,38 @@ DIM=2; %number of spatial dimensions
 
 Img_MeshMeasLocation=imread('MeshMeasurements_square_belt.png');
 image(Img_MeshMeasLocation)
-MeshMeasurements=MeshMeasurements_100times100_SquareBelt_belt65to85;
+% MeshMeasurements=MeshMeasurements_100times100_SquareBelt_belt65to85;
+
+%% test
+
+MeshMeasurements.XCoord=10;
+MeshMeasurements.YCoord=10;
+MeshMeasurements.FineStartAtYCoord=6;
+MeshMeasurements.FineEndAtYCoord=8;
+
+ScattererMeasurements.FromXCoord=6.5;
+ScattererMeasurements.ToXCoord=7.5;
+ScattererMeasurements.FromYCoord=6.5;
+ScattererMeasurements.ToYCoord=7.5;
+
+GaussParam.Ampl=1;
+GaussParam.relaxfact=1;
+
+%%
 MeshParam = MeshParameters_square_belt(MeshMeasurements);
 MeshParam.deltaboundary=1.0/12.0;
 UpdateNum_belt=2;
 [sC,sG,UpdateNum,edgevec,first_pIdx,tilde_node_position,MeshNum,MeshParam] ...
     = GenerateMesh_square_belt(UpdateNum_belt,MeshParam);
 
-ScattererMeasurements.FromXCoord=17;
-ScattererMeasurements.ToXCoord=33;
-ScattererMeasurements.FromYCoord=67;
-ScattererMeasurements.ToYCoord=83;
+% ScattererMeasurements.FromXCoord=17;
+% ScattererMeasurements.ToXCoord=33;
+% ScattererMeasurements.FromYCoord=67;
+% ScattererMeasurements.ToYCoord=83;
 ImpedanceParam.freespace=1.0;
-ImpedanceParam.medium=0.01;
+ImpedanceParam.medium=1.0;
+%ImpedanceParam.medium=0.01;
+
 Zinv_p...
     = Impedance_SquareScatterer(ImpedanceParam,ScattererMeasurements,sC,UpdateNum,first_pIdx,MeshNum,MeshParam,MeshMeasurements);
 disp('Initial conditions: Gaussian Distribution of Bz, centered at the Dead center of the mesh')
@@ -69,15 +87,16 @@ cdt=0.41;
 % Future tasks; utilize spatial-FI-like calculation in Constitutive
 [kappa,b_area,att,MeshNum] = Constitutive(cdt,sC,sG,UpdateNum,edgevec,first_pIdx,att,MeshNum);
 kappaoverZ=kappa.*Zinv_p;
+
 %% calculating initial distribution
 
-GaussParam.Ampl=1;
-GaussParam.relaxfact=10;
+% GaussParam.Ampl=1;
+% GaussParam.relaxfact=10;
 
 InitVal ...
     =GaussianDistributBz(GaussParam,tilde_node_position,b_area,MeshNum,gauss_center);
 
-%% Obtain Time-marching Matrix
+%% Obtain Time-marching Matrix 
 
 % #4: combine both space-time and spatial FI in order to make the size of D small
 [subG_bin,subG_sizes,allIdx_stFI,UpdateNum] ...
@@ -87,7 +106,10 @@ InitVal ...
 [TMM_Explicit] ...
     = Obtain_TMM_Explicit(kappaoverZ,sC,UpdateNum,allIdx_stFI,subG_bin,subG_sizes,att,first_pIdx,MeshNum);
 
-%% Execute Explicit Calculation
+D_tildeD_Zinv=[D;Ctrans * spdiags(kappaoverZ,0,MeshNum.P,MeshNum.P)];
+clearvars D Ctrans
+
+%% Execute Explicit Calculation 
 
 time=0;
 variables_f_then_e=[InitVal.f; InitVal.e];
@@ -99,18 +121,24 @@ disp(['Executing Calculation: from ct = ',num2str(time), ' to ct = ',num2str(tim
 
 time = time + CalPeriod;
 [variables_f_then_e] ...
-    =execution_with_TMM_Explicit(TMM_Explicit,variables_f_then_e,number_of_steps);
+    = execution_with_TMM_Explicit(TMM_Explicit,variables_f_then_e,number_of_steps);
 
-b_f=variables_f_then_e(1:MeshNum.F);
-disp(['plotting Bz at ct =' num2str(time)])
+b_f = variables_f_then_e(1:MeshNum.F);
+disp(['plotting Bz at ct = ', num2str(time)])
 plot_bface_general(b_f,b_area,tilde_node_position,MeshParam,MeshNum)
 
- 
 %% Eigenvalue Analysis
 
-% eigenvalues = eigs(TMM_Explicit,20,'largestabs','Tolerance',1e-3);
-% plot(eigenvalues)
-% IdxUnstabEigVal=find(abs(eigenvalues)>1+EPSILON)
+eigenvalues = eigs(TMM_Explicit,2,'largestabs','Tolerance',1e-3);
+figure
+plot(eigenvalues)
+IdxUnstabEigVal=find(abs(eigenvalues)>1+10^(-4));
+if size(IdxUnstabEigVal,1)==0
+    disp(['stable for cdt = ',num2str(cdt),'(EPSILON = ',num2str(10^(-4)),')'])
+else
+    disp(['unstable for cdt = ',num2str(cdt),'(EPSILON = ',num2str(10^(-4)),')'])
+end
+
 
 %% Error to Conventional stFI
 

@@ -17,17 +17,6 @@ B_mesh=B_mesh./area_squareoid;
 
 %%
 
-% figure('name','Bz, Calculated by New Method')
-% ax = gca;
-% contour(Bz_obi)
-% xlabel('x','FontSize',30)
-% ylabel('y','FontSize',30)
-% xticks([0 25 50 75 100])
-% yticks([0 25 50 75 100])
-% ax.FontSize = 20;
-
-%%
-
 figure('name','Bz, Calculated by New Method')
 xa = gca;
 mesh(B_mesh.')

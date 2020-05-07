@@ -4,7 +4,7 @@ if taskIdx_for_p(p)==0
     taskIdx_newest=taskIdx_newest+1;
     s_or_t=taskIdx_newest;
     taskIdx_for_p(p)=taskIdx_newest;
-    p_for_taskIdx(taskIdx_newest)=p;
+    task(taskIdx_newest).p_tgt=p;
     if p_is_init==true
         task(taskIdx_newest).typ="InitVal";
     else 
