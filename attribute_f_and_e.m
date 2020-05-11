@@ -1,9 +1,13 @@
 function [att] ...
     =attribute_f_and_e(sC,sG,UpdateNum,MeshNum)
 
-disp('attribute_f_and_e: CALLED')
-
 global EPSILON
+global DISPDEBUGGINGMESSAGE
+global DISPCAUTIONMESSAGE
+
+if DISPDEBUGGINGMESSAGE
+    disp('attribute_f_and_e: CALLED')
+end
 
 % allocate attribute vector
 att.e.boundaryedge=logical(sparse(MeshNum.E,1));
@@ -68,7 +72,9 @@ for e_tar=1:MeshNum.E
         if att.f.inc_bounde(f)==true
             continue
         end
-        disp('outer-corner face found ')
+        if DISPCAUTIONMESSAGE
+            disp('outer-corner face found ')
+        end
         att.f.inc_bounde(f)=true;
     end
 end % for e_tar
@@ -93,5 +99,7 @@ for ff=1:size(allIdx_stFI_f,1)
         end
     end
 end
-disp('attribute_f_and_e: ENDED')
+if DISPDEBUGGINGMESSAGE
+    disp('attribute_f_and_e: ENDED')
+end
 end

@@ -15,19 +15,23 @@ for f=1:MeshNum.F
     impedance_inverse_f(f)=1.0/ImpedanceParam.freespace;
 end
 
-ScatFrom_i=0.5*floor(2*ScattererMeasurements.FromXCoord);
-ScatTo_i=0.5*ceil(2*ScattererMeasurements.ToXCoord);
-ScatFrom_j=0.5*floor(2*ScattererMeasurements.FromXCoord);
-ScatTo_j=0.5*ceil(2*ScattererMeasurements.ToXCoord);
+ScatFrom_i = floor(ScattererMeasurements.FromXCoord);
+ScatTo_i   =  ceil(ScattererMeasurements.ToXCoord);
+ScatFrom_j = floor(ScattererMeasurements.FromXCoord);
+ScatTo_j   =  ceil(ScattererMeasurements.ToXCoord);
 
 
 % medium
-for j=round(2*ScatFrom_j):round(2*ScatTo_j)
-    for i=round(2*ScatFrom_i):round(2*ScatTo_i)
-        f=i-...
-            +MeshParam.FacePerRow_Subgrid*(j-MeshParam.Fine_Y_from)...
-            +MeshParam.coarse_FNum_former;
-        impedance_inverse_f(f)=1.0/ImpedanceParam.medium;       
+for j=ScatFrom_j:ScatTo_j
+    for i=ScatFrom_i:ScatTo_i
+        for localfaceIdx=1:4
+            f=localfaceIdx...
+                +4*(i-MeshParam.Fine_X_from) ...
+                +MeshParam.Fine_X_from-1 ...
+                +MeshParam.FacePerRow_Subgrid*(j-MeshParam.Fine_Y_from)...
+                +MeshParam.coarse_FNum_former;
+            impedance_inverse_f(f)=1.0/ImpedanceParam.medium;
+        end
     end
 end
 

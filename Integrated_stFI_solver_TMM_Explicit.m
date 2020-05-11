@@ -3,12 +3,14 @@ clear;
 global EPSILON
 global DIM
 global DISPDEBUGGINGMESSAGE
+global DISPCAUTIONMESSAGE
 global DOEIGVANALYSIS
 
-EPSILON = 10^(-7);
-DIM = 2; %number of spatial dimensions
-DISPDEBUGGINGMESSAGE = true;
-DOEIGVANALYSIS =true;
+EPSILON = 10^(-7)
+DIM = 2; %number of spatial dimensions: DO NOT CHANGE unless you rewrited the codes for 3D analysis
+DISPCAUTIONMESSAGE =true
+DISPDEBUGGINGMESSAGE = true
+DOEIGVANALYSIS =false
 
 %% Spatial Meshing and Impedance for belt-like subgrid region with triangle faces 
 
@@ -71,7 +73,7 @@ DOEIGVANALYSIS =true;
 % %ImpedanceParam.medium=0.01;
 % %Zinv_p=ones(MeshNum.P,1);
 %  Zinv_p...
-%      = Impedance_SquareScatterer(ImpedanceParam,ScattererMeasurements,sC,UpdateNum,first_pIdx,MeshNum,MeshParam,MeshMeasurements);
+%      = Impedance_SquareScatterer_BeltlikeSubgrid(ImpedanceParam,ScattererMeasurements,sC,UpdateNum,first_pIdx,MeshNum,MeshParam,MeshMeasurements);
 % disp('Initial conditions: Gaussian Distribution of Bz, centered at the Dead center of the mesh')
 % gauss_center.x=MeshParam.Size_X/2.0;
 % gauss_center.y=0.5*(MeshParam.Fine_Y_from-1 ...
@@ -80,8 +82,8 @@ DOEIGVANALYSIS =true;
 
 %% Spatial Meshing and Impedance for square-like subgrid region only with square faces
 
-Img_MeshMeasLocation=imread('MeshMeasurements_square_belt.png');
-image(Img_MeshMeasLocation)
+%Img_MeshMeasLocation=imread('MeshMeasurements_square_belt.png');
+%image(Img_MeshMeasLocation)
 % MeshMeasurements=MeshMeasurements_100times100_SquareBelt_belt65to85;
 
 %% test
@@ -128,14 +130,14 @@ gauss_center.y=0.5*MeshMeasurements.YCoord;
 % Future tasks; modify att into nested structures like att.e(e).bound
 att = attribute_f_and_e(sC,sG,UpdateNum, MeshNum);
 
-cdt=0.30;
+cdt=0.51;
 
 % Future tasks; adapt Constitutive to partially non-orthogonal grids:DONE
 % but not been tested yet
 % Future tasks; adapt Constitutive to subgrid corners
 % Future tasks; utilize spatial-FI-like calculation in Constitutive
 disp('Constitutive: CALLING')
-[kappa,b_area,att,MeshNum] = Constitutive(cdt,sC,sG,UpdateNum,edgevec,first_pIdx,att,MeshNum);
+[kappa,b_area,att,MeshNum]=Constitutive(cdt,sC,sG,UpdateNum,edgevec,first_pIdx,att,MeshNum);
 disp('Constitutive: ENDED')
 kappaoverZ=kappa.*Zinv_p;
 
@@ -173,7 +175,7 @@ disp('Construct_TMM_Explicit:ENDED')
 time=0;
 variables_f_then_e=[InitVal.f; InitVal.e];
 
-number_of_steps=100
+number_of_steps=1000000
 
 CalPeriod=cdt * number_of_steps;
 disp(['Executing Calculation: from ct = ',num2str(time), ' to ct = ',num2str(time+CalPeriod)])
@@ -187,7 +189,7 @@ disp(['plotting Bz at ct = ', num2str(time)])
 plot_bface_general(b_f,b_area,tilde_f,MeshParam,MeshNum)
 
 %% Eigenvalue Analysis
-if DOEIGVANALYSIS 
+if DOEIGVANALYSIS ==true
     disp('Calculating Eigenvalues')
     
     eigenvalues = eigs(TMM_Explicit,100,'largestabs');

@@ -4,6 +4,10 @@ function [kappa,b_area,att,MeshNum] ...
 
 global EPSILON
 global DIM
+global DISPDEBUGGINGMESSAGE
+global DISPCAUTIONMESSAGE
+
+
 
 exception=0;% dummy
 %% Parameters
@@ -15,9 +19,11 @@ att.e.nonorthogonal=logical(sparse(MeshNum.E,1));
 att.e.corner=logical(sparse(MeshNum.E,1));
 for e_tar=1:MeshNum.E
      if abs(DirectionVecPrim(e_tar,edgevec).'*DirectionVecDual(e_tar,edgevec))>EPSILON
-        disp(['nonorthogonal edge found:e=',num2str(e_tar),...
-            ' cos of the edge pair =',...
-            num2str(DirectionVecPrim(e_tar,edgevec).'*DirectionVecDual(e_tar,edgevec))])
+         if DISPCAUTIONMESSAGE
+             disp(['CAUTION: Nonorthogonal edge found e=',num2str(e_tar),...
+                 ' cosine of the dual-edge directions =',...
+                 num2str(DirectionVecPrim(e_tar,edgevec).'*DirectionVecDual(e_tar,edgevec))])
+         end
         att.e.nonorthogonal(e_tar)=true;
     end
 end
@@ -48,6 +54,12 @@ clearvars Dummy
 
 
 %% calculate kappa for boundary edges
+
+if DISPDEBUGGINGMESSAGE==true
+    disp('calculating kappa for boundary edges')
+end
+
+
 %disp('calculating kappa for boundary edges')
 for e_tar=1:MeshNum.E
     if att.e.boundaryedge(e_tar)==false
@@ -82,7 +94,9 @@ for e_tar=1:MeshNum.E
         if Parallel.is==true
             DirVec_NodeDelta=e_connec_to_ep1(Parallel.e_con_ep1_Idx).DirVec;
         else
-            disp(['Cannot define DirVec_NodeDelta for e_tar = ', num2str(e_tar),'; treat e_tar as an subgrid corner edge'])
+            if DISPCAUTIONMESSAGE
+                disp(['CAUTION: Cannot define DirVec_NodeDelta for e_tar = ', num2str(e_tar),'; function ''Constitutive'' treats e_tar as an subgrid corner edge'])
+            end
             att.e.corner(e_tar)=true;
             continue
         end
@@ -90,8 +104,12 @@ for e_tar=1:MeshNum.E
         sintheta=sqrt(1-costheta^2);
         
         if att.e.nonorthogonal(e_tar)==true
-            disp(['CAUTION: boundary edge e =',num2str(e_tar),',which is NOT a subgrid-corner edge, is nonorthogonal to it''s dual.'])
-            pause(10)
+            disp(['UNEXPECTED INPUT: boundary edge e =',num2str(e_tar),',which is NOT a subgrid-corner edge, is nonorthogonal to it''s dual.'])
+            disp(['Note: nonorthogonal edges are acceptable ',...
+                '(1) when they are NOT UpdateNum-varying boundaries',...
+                '(2) when they are UpdateNum-varying boundaries and locates at the corners of the subgrid.'])
+            disp('pausing... press CTRL+C to stop running')
+            pause
         end
         
         for timesection=1:UpdNum_e_tar
@@ -134,8 +152,6 @@ for e_tar=1:MeshNum.E
             stnInfo(stn_Future_ep2).NodeDeltaVec=...
                 stnInfo(stn_Past_ep2).NodeDeltaVec+delta_position*DirVec_NodeDelta;
             
-            stnInfo(stn_Future_ep1).NodeDeltaVec
-            stnInfo(stn_Future_ep2).NodeDeltaVec
             LorenzInvariant_dS(p_tar)=-Length_tilde_e_tar^2+DeltaTime_etilde^2;
             kappa(p_tar)=sign(LorenzInvariant_dS(p_tar))*kappa(p_tar);            
         end 
@@ -145,6 +161,9 @@ for e_tar=1:MeshNum.E
 end
 
 %% calculate kappa for corners
+if DISPDEBUGGINGMESSAGE==true
+    disp('calculating kappa for corner-boundary edges')
+end
 
 for e_tar=1:MeshNum.E
     if att.e.boundaryedge(e_tar)==false || att.e.corner(e_tar)==false
@@ -290,7 +309,11 @@ for e_tar=1:MeshNum.E
 end
 
 %% calculate kappa for non-boundary edges
-%disp('calculating kappa for non-boundary edges')
+if DISPDEBUGGINGMESSAGE==true
+    disp('calculating kappa for non-boundary edges')
+end
+
+
 for e_tar=1:MeshNum.E  
     if att.e.boundaryedge(e_tar)==true
          continue;
@@ -337,7 +360,9 @@ for e_tar=1:MeshNum.E
 end % loop for e_target
 
 %% calculate kappa for non-boundary faces
-%disp('calculating kappa for faces')
+if DISPDEBUGGINGMESSAGE==true
+    disp('calculating kappa for faces')
+end
 for f_tar=1:MeshNum.F
     %     f_tar
     if exception==1
