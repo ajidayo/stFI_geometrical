@@ -1,5 +1,5 @@
 function [InitVal] ...
-    =GaussianDistributBz(GaussParam,tilde_node_position,b_area,MeshNum,gauss_center)
+    =GaussianDistributBz(GaussParam,tilde_f,b_area,MeshNum,gauss_center)
 disp('GaussianDistributBz; CALLED')
 %% gaussian distribution parameters
 
@@ -12,8 +12,8 @@ disp([gauss_center.x gauss_center.y])
 %% calculate initial values
 InitBz=zeros(MeshNum.F,1);
 for f=1:MeshNum.F
-    x=tilde_node_position(f,1);
-    y=tilde_node_position(f,2);
+    x=tilde_f(f).position(1);
+    y=tilde_f(f).position(2);
     InitBz(f)=GaussParam.Ampl*exp(-((x-gauss_center.x)^2+(y-gauss_center.y)^2)/GaussParam.relaxfact) ...
         *b_area(f);
 end

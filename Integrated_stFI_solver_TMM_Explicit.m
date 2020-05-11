@@ -36,54 +36,99 @@ DOEIGVANALYSIS =true;
 
 %% Spatial Meshing and Impedance for belt-like subgrid region only with square faces
 
+% Img_MeshMeasLocation=imread('MeshMeasurements_square_belt.png');
+% image(Img_MeshMeasLocation)
+% % MeshMeasurements=MeshMeasurements_100times100_SquareBelt_belt65to85;
+% 
+% %% test
+% 
+% MeshMeasurements.XCoord=10;
+% MeshMeasurements.YCoord=10;
+% MeshMeasurements.FineStartAtYCoord=6;
+% MeshMeasurements.FineEndAtYCoord=8;
+% 
+% ScattererMeasurements.FromXCoord=6.5;
+% ScattererMeasurements.ToXCoord=7.5;
+% ScattererMeasurements.FromYCoord=6.5;
+% ScattererMeasurements.ToYCoord=7.5;
+% 
+% GaussParam.Ampl=1;
+% GaussParam.relaxfact=1;
+% 
+% %% end test
+% MeshParam = MeshParameters_square_belt(MeshMeasurements);
+% MeshParam.deltaboundary=1.0/12.0;
+% UpdateNum_belt=2;
+% [sC,sG,UpdateNum,edgevec,first_pIdx,tilde_node_position,MeshNum,MeshParam] ...
+%     = GenerateMesh_square_belt(UpdateNum_belt,MeshParam);
+% 
+% % ScattererMeasurements.FromXCoord=17;
+% % ScattererMeasurements.ToXCoord=33;
+% % ScattererMeasurements.FromYCoord=67;
+% % ScattererMeasurements.ToYCoord=83;
+% ImpedanceParam.freespace=1.0;
+% ImpedanceParam.medium=1.0;
+% %ImpedanceParam.medium=0.01;
+% %Zinv_p=ones(MeshNum.P,1);
+%  Zinv_p...
+%      = Impedance_SquareScatterer(ImpedanceParam,ScattererMeasurements,sC,UpdateNum,first_pIdx,MeshNum,MeshParam,MeshMeasurements);
+% disp('Initial conditions: Gaussian Distribution of Bz, centered at the Dead center of the mesh')
+% gauss_center.x=MeshParam.Size_X/2.0;
+% gauss_center.y=0.5*(MeshParam.Fine_Y_from-1 ...
+%     +(MeshParam.Fine_Y_to-MeshParam.Fine_Y_from+1)/2.0...
+%     +(MeshParam.Size_Y-MeshParam.Fine_Y_to));
+
+%% Spatial Meshing and Impedance for square-like subgrid region only with square faces
+
 Img_MeshMeasLocation=imread('MeshMeasurements_square_belt.png');
 image(Img_MeshMeasLocation)
 % MeshMeasurements=MeshMeasurements_100times100_SquareBelt_belt65to85;
 
 %% test
 
-MeshMeasurements.XCoord=10;
-MeshMeasurements.YCoord=10;
-MeshMeasurements.FineStartAtYCoord=6;
-MeshMeasurements.FineEndAtYCoord=8;
+MeshMeasurements.XCoord=100;
+MeshMeasurements.YCoord=100;
+MeshMeasurements.FineStartAtXCoord=15;
+MeshMeasurements.FineEndAtXCoord=35;
+MeshMeasurements.FineStartAtYCoord=15;
+MeshMeasurements.FineEndAtYCoord=35;
 
-ScattererMeasurements.FromXCoord=6.5;
-ScattererMeasurements.ToXCoord=7.5;
-ScattererMeasurements.FromYCoord=6.5;
-ScattererMeasurements.ToYCoord=7.5;
+ScattererMeasurements.FromXCoord=20;
+ScattererMeasurements.ToXCoord=30;
+ScattererMeasurements.FromYCoord=20;
+ScattererMeasurements.ToYCoord=30;
 
 GaussParam.Ampl=1;
-GaussParam.relaxfact=1;
+GaussParam.relaxfact=10;
 
-%%
-MeshParam = MeshParameters_square_belt(MeshMeasurements);
+%% end test
+MeshParam = MeshParameters_squarefaces_squaresubgrid(MeshMeasurements);
 MeshParam.deltaboundary=1.0/12.0;
-UpdateNum_belt=2;
-[sC,sG,UpdateNum,edgevec,first_pIdx,tilde_node_position,MeshNum,MeshParam] ...
-    = GenerateMesh_square_belt(UpdateNum_belt,MeshParam);
+MeshParam.deltacorner=0;
+UpdateNum_subgrid=2;
+[sC,sG,UpdateNum,edgevec,first_pIdx,tilde_f,MeshNum,MeshParam] ...
+    = GenerateMesh_squarefaces_squaresubgrid(UpdateNum_subgrid,MeshParam);
 
 % ScattererMeasurements.FromXCoord=17;
 % ScattererMeasurements.ToXCoord=33;
 % ScattererMeasurements.FromYCoord=67;
 % ScattererMeasurements.ToYCoord=83;
 ImpedanceParam.freespace=1.0;
-ImpedanceParam.medium=1.0;
+ImpedanceParam.medium=0.01;
 %ImpedanceParam.medium=0.01;
 %Zinv_p=ones(MeshNum.P,1);
  Zinv_p...
      = Impedance_SquareScatterer(ImpedanceParam,ScattererMeasurements,sC,UpdateNum,first_pIdx,MeshNum,MeshParam,MeshMeasurements);
 disp('Initial conditions: Gaussian Distribution of Bz, centered at the Dead center of the mesh')
-gauss_center.x=MeshParam.Size_X/2.0;
-gauss_center.y=0.5*(MeshParam.Fine_Y_from-1 ...
-    +(MeshParam.Fine_Y_to-MeshParam.Fine_Y_from+1)/2.0...
-    +(MeshParam.Size_Y-MeshParam.Fine_Y_to));
+gauss_center.x=0.5*MeshMeasurements.XCoord;
+gauss_center.y=0.5*MeshMeasurements.YCoord;
 
 %% Calculate Constitutive Equation
 
 % Future tasks; modify att into nested structures like att.e(e).bound
 att = attribute_f_and_e(sC,sG,UpdateNum, MeshNum);
 
-cdt=0.6250;
+cdt=0.30;
 
 % Future tasks; adapt Constitutive to partially non-orthogonal grids:DONE
 % but not been tested yet
@@ -100,11 +145,12 @@ kappaoverZ=kappa.*Zinv_p;
 % GaussParam.relaxfact=10;
 
 InitVal ...
-    =GaussianDistributBz(GaussParam,tilde_node_position,b_area,MeshNum,gauss_center);
+    =GaussianDistributBz(GaussParam,tilde_f,b_area,MeshNum,gauss_center);
 
 %% Obtain Time-marching Matrix 
 
-% #4: combine both space-time and spatial FI in order to make the size of D small
+% #4: combine both space-time and spatial FI in order to make the size of D
+% small
 disp('Divide_into_induced_subgraphs:CALLING')
 [subG_bin,subG_sizes,allIdx_stFI,UpdateNum] ...
     = Divide_into_induced_subgraphs(sC,UpdateNum,MeshNum,att);
@@ -127,7 +173,7 @@ disp('Construct_TMM_Explicit:ENDED')
 time=0;
 variables_f_then_e=[InitVal.f; InitVal.e];
 
-number_of_steps=100000
+number_of_steps=100
 
 CalPeriod=cdt * number_of_steps;
 disp(['Executing Calculation: from ct = ',num2str(time), ' to ct = ',num2str(time+CalPeriod)])
@@ -138,7 +184,7 @@ time = time + CalPeriod;
 
 b_f = variables_f_then_e(1:MeshNum.F);
 disp(['plotting Bz at ct = ', num2str(time)])
-plot_bface_general(b_f,b_area,tilde_node_position,MeshParam,MeshNum)
+plot_bface_general(b_f,b_area,tilde_f,MeshParam,MeshNum)
 
 %% Eigenvalue Analysis
 if DOEIGVANALYSIS 
@@ -157,10 +203,10 @@ if DOEIGVANALYSIS
     EigvEpsilon=10^(-7);
     IdxUnstabEigVal=find(EigValAbs>1+EigvEpsilon);
     if size(IdxUnstabEigVal,1)==0
-        disp(['stable for cdt = ',num2str(cdt),' (EPSILON = ',num2str(EigvEpsilon),')'])
+        disp(['stable for cdt = ',num2str(cdt),' (EigvEpsilon = ',num2str(EigvEpsilon),')'])
         %disp(EigValAbs)
     else
-        disp(['unstable for cdt = ',num2str(cdt),' (EPSILON = ',num2str(EigvEpsilon),')'])
+        disp(['unstable for cdt = ',num2str(cdt),' (EigvEpsilon = ',num2str(EigvEpsilon),')'])
         %disp(EigValAbs)
     end
 end

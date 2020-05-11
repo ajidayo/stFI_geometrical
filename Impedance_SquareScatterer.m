@@ -15,20 +15,17 @@ for f=1:MeshNum.F
     impedance_inverse_f(f)=1.0/ImpedanceParam.freespace;
 end
 
-ScatFrom_i=floor(2*ScattererMeasurements.FromXCoord);
-ScatTo_i=ceil(2*ScattererMeasurements.ToXCoord);
-ScatFrom_j=2*((1/2)*floor(2*ScattererMeasurements.FromYCoord)...
-    -floor(MeshMeasurements.FineStartAtYCoord))...
-    +floor(MeshMeasurements.FineStartAtYCoord);
-ScatFrom_j=round(ScatFrom_j);
-ScatTo_j=2*((1/2)*ceil(2*ScattererMeasurements.ToYCoord)...
-    -floor(MeshMeasurements.FineStartAtYCoord))...
-    +floor(MeshMeasurements.FineStartAtYCoord);
-ScatTo_j=round(ScatTo_j);
+ScatFrom_i=0.5*floor(2*ScattererMeasurements.FromXCoord);
+ScatTo_i=0.5*ceil(2*ScattererMeasurements.ToXCoord);
+ScatFrom_j=0.5*floor(2*ScattererMeasurements.FromXCoord);
+ScatTo_j=0.5*ceil(2*ScattererMeasurements.ToXCoord);
+
+
 % medium
-for j=ScatFrom_j:ScatTo_j
-    for i=ScatFrom_i:ScatTo_i
-        f=2*MeshParam.Size_X*(j-MeshParam.Fine_Y_from)+i...
+for j=round(2*ScatFrom_j):round(2*ScatTo_j)
+    for i=round(2*ScatFrom_i):round(2*ScatTo_i)
+        f=i-...
+            +MeshParam.FacePerRow_Subgrid*(j-MeshParam.Fine_Y_from)...
             +MeshParam.coarse_FNum_former;
         impedance_inverse_f(f)=1.0/ImpedanceParam.medium;       
     end

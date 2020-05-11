@@ -1,4 +1,4 @@
-function plot_bface_general(b_f,b_area,tilde_node_position,MeshParam,MeshNum)
+function plot_bface_general(b_f,b_area,tilde_f,MeshParam,MeshNum)
 % title should be included in the argument
 
 
@@ -6,8 +6,8 @@ B_mesh=zeros(MeshParam.Size_X,MeshParam.Size_Y);
 area_squareoid=zeros(MeshParam.Size_X,MeshParam.Size_Y);
 
 for f=1:MeshNum.F
-    i = ceil(tilde_node_position(f,1));
-    j = ceil(tilde_node_position(f,2));
+    i = ceil(tilde_f(f).position(1));
+    j = ceil(tilde_f(f).position(2));
     
     B_mesh(i,j)=B_mesh(i,j)+b_f(f);
     area_squareoid(i,j)=area_squareoid(i,j)+b_area(f);
