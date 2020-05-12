@@ -217,7 +217,6 @@ if DOEIGVANALYSIS ==true
         disp('ERROR: None of the eigenvaules converged.')    
     end
 end
-% hoge
 
 %% Error to Conventional stFI
 
