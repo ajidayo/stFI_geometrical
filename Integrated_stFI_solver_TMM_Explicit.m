@@ -126,7 +126,7 @@ disp('Initial conditions: Gaussian Distribution of Bz, centered at the Dead cent
 gauss_center.x=0.5*MeshMeasurements.XCoord;
 gauss_center.y=0.5*MeshMeasurements.YCoord;
 
-%% Calculate Constitutive Equation
+%% Calculate Discrete Hodge operator (Constitutive equation, [z]^-1)
 
 % Future tasks; modify att into nested structures like att.e(e).bound
 att = attribute_f_and_e(sC,sG,UpdateNum, MeshNum);
@@ -142,7 +142,7 @@ disp('Constitutive: CALLING')
 disp('Constitutive: ENDED')
 kappaoverZ=kappa.*Zinv_p;
 
-%% calculating initial distribution
+%% calculating initial distribution of Bz
 
 % GaussParam.Ampl=1;
 % GaussParam.relaxfact=10;
@@ -150,7 +150,7 @@ kappaoverZ=kappa.*Zinv_p;
 InitVal ...
     =GaussianDistributBz(GaussParam,tilde_f,b_area,MeshNum,gauss_center);
 
-%% Obtain Time-marching Matrix 
+%% Obtain Time-marching Matrix  for single timestep
 
 % #4: combine both space-time and spatial FI in order to make the size of D
 % small
@@ -159,7 +159,6 @@ disp('Divide_into_induced_subgraphs:CALLING')
     = Divide_into_induced_subgraphs(sC,UpdateNum,MeshNum,att);
 disp('Divide_into_induced_subgraphs:ENDED')
 
-% task: allocate TMM beforehand to reduce overheads
 [Taskorder,task,D,Ctrans] ...
     = Obtain_TaskOrderandIncMat(sC,UpdateNum,allIdx_stFI,subG_bin,subG_sizes,att,first_pIdx,MeshNum);
 
