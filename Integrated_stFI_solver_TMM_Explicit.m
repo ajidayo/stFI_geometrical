@@ -16,6 +16,8 @@ DOEIGVANALYSIS =true
 
 % Img_MeshMeasLocation=imread('MeshMeasurements_triangle_belt.png');
 % image(Img_MeshMeasLocation)
+
+% % task; unify two function MeshParameters_hoge... and GenerateMesh_hoge
 % MeshMeasurements=MeshMeasurements_100times100_withTriangle;
 % MeshParam = MeshParameters_triangle_belt(MeshMeasurements);
 % MeshParam.deltatriangle=0.1;
@@ -42,22 +44,20 @@ DOEIGVANALYSIS =true
 % image(Img_MeshMeasLocation)
 % % MeshMeasurements=MeshMeasurements_100times100_SquareBelt_belt65to85;
 % 
-% %% test
-% 
+% % test
 % MeshMeasurements.XCoord=10;
 % MeshMeasurements.YCoord=10;
 % MeshMeasurements.FineStartAtYCoord=6;
 % MeshMeasurements.FineEndAtYCoord=8;
-% 
 % ScattererMeasurements.FromXCoord=6.5;
 % ScattererMeasurements.ToXCoord=7.5;
 % ScattererMeasurements.FromYCoord=6.5;
 % ScattererMeasurements.ToYCoord=7.5;
-% 
 % GaussParam.Ampl=1;
 % GaussParam.relaxfact=1;
-% 
-% %% end test
+% % end test
+
+% % task; unify two function MeshParameters_hoge... and GenerateMesh_hoge
 % MeshParam = MeshParameters_square_belt(MeshMeasurements);
 % MeshParam.deltaboundary=1.0/12.0;
 % UpdateNum_belt=2;
@@ -82,47 +82,39 @@ DOEIGVANALYSIS =true
 
 %% Input (3): Spatial Meshing and Impedance for square-like subgrid region only with square faces
 
-% task: replace image to a correct one
-Img_MeshMeasLocation=imread('MeshMeasurements_square_belt.png');
+Img_MeshMeasLocation=imread('MeshMeasurements_squarefaces_squaresubgrid.png');
 image(Img_MeshMeasLocation)
-% MeshMeasurements=MeshMeasurements_100times100_SquareBelt_belt65to85;
 
-%% test
-
+% test
 MeshMeasurements.XCoord=100;
 MeshMeasurements.YCoord=100;
 MeshMeasurements.FineStartAtXCoord=15;
 MeshMeasurements.FineEndAtXCoord=35;
 MeshMeasurements.FineStartAtYCoord=15;
 MeshMeasurements.FineEndAtYCoord=35;
-
 ScattererMeasurements.FromXCoord=20;
 ScattererMeasurements.ToXCoord=30;
 ScattererMeasurements.FromYCoord=20;
 ScattererMeasurements.ToYCoord=30;
+% end test
 
-GaussParam.Ampl=1;
-GaussParam.relaxfact=10;
-
-%% end test
+% task; unify two function MeshParameters_hoge... and GenerateMesh_hoge
 MeshParam = MeshParameters_squarefaces_squaresubgrid(MeshMeasurements);
 MeshParam.deltaboundary=1.0/12.0;
-MeshParam.deltacorner=0;
+MeshParam.deltacorner=0; % Not used yet
 UpdateNum_subgrid=2;
 [sC,sG,UpdateNum,edgevec,first_pIdx,tilde_f,MeshNum,MeshParam] ...
     = GenerateMesh_squarefaces_squaresubgrid(UpdateNum_subgrid,MeshParam);
 
-% ScattererMeasurements.FromXCoord=17;
-% ScattererMeasurements.ToXCoord=33;
-% ScattererMeasurements.FromYCoord=67;
-% ScattererMeasurements.ToYCoord=83;
 ImpedanceParam.freespace=1.0;
 ImpedanceParam.medium=0.01;
-%ImpedanceParam.medium=0.01;
 %Zinv_p=ones(MeshNum.P,1);
  Zinv_p...
      = Impedance_SquareScatterer(ImpedanceParam,ScattererMeasurements,sC,UpdateNum,first_pIdx,MeshNum,MeshParam,MeshMeasurements);
 disp('Initial conditions: Gaussian Distribution of Bz, centered at the Dead center of the mesh')
+
+GaussParam.Ampl=1;
+GaussParam.relaxfact=10;
 gauss_center.x=0.5*MeshMeasurements.XCoord;
 gauss_center.y=0.5*MeshMeasurements.YCoord;
 
@@ -133,9 +125,6 @@ att = attribute_f_and_e(sC,sG,UpdateNum, MeshNum);
 
 cdt=0.50;
 
-% Future tasks; adapt Constitutive to partially non-orthogonal grids:DONE
-% but not been tested yet
-% Future tasks; adapt Constitutive to subgrid corners
 % Future tasks; utilize spatial-FI-like calculation in Constitutive
 disp('Constitutive: CALLING')
 [kappa,b_area,att,MeshNum]=Constitutive(cdt,sC,sG,UpdateNum,edgevec,first_pIdx,att,MeshNum);
@@ -143,9 +132,6 @@ disp('Constitutive: ENDED')
 kappaoverZ=kappa.*Zinv_p;
 
 %% calculating initial distribution of Bz
-
-% GaussParam.Ampl=1;
-% GaussParam.relaxfact=10;
 
 InitVal ...
     =GaussianDistributBz(GaussParam,tilde_f,b_area,MeshNum,gauss_center);
