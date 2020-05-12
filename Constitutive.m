@@ -1,13 +1,14 @@
 function [kappa,b_area,att,MeshNum] ...
     =Constitutive(cdt,sC,sG,UpdateNum,edgevec,first_pIdx,att,MeshNum)
-%disp('Constitutive: CALLED')
 
 global EPSILON
 global DIM
 global DISPDEBUGGINGMESSAGE
 global DISPCAUTIONMESSAGE
 
-
+if DISPDEBUGGINGMESSAGE
+    disp('Constitutive: CALLED')
+end
 
 exception=0;% dummy
 %% Parameters
@@ -385,7 +386,9 @@ end %  f_tar
 
 %% STOP
 
-%disp('Constitutive:ENDED')
+if DISPDEBUGGINGMESSAGE
+    disp('Constitutive:ENDED')
+end
 
 
 end

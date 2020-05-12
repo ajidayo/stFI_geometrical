@@ -72,8 +72,8 @@ for e_tar=1:MeshNum.E
         if att.f.inc_bounde(f)==true
             continue
         end
-        if DISPCAUTIONMESSAGE
-            disp('outer-corner face found ')
+        if DISPDEBUGGINGMESSAGE
+            disp(['CHECK THIS WHEN DEBUGGING: outer-corner face found: f=', num2str(f)])
         end
         att.f.inc_bounde(f)=true;
     end

@@ -10,7 +10,7 @@ EPSILON = 10^(-7)
 DIM = 2; %number of spatial dimensions: DO NOT CHANGE unless you rewrited the codes for 3D analysis
 DISPCAUTIONMESSAGE =true
 DISPDEBUGGINGMESSAGE = true
-DOEIGVANALYSIS =true
+DOEIGVANALYSIS =false
 
 %% Input (1): Spatial Meshing and Impedance for belt-like subgrid region with triangle faces 
 
@@ -96,7 +96,7 @@ ScattererMeasurements.FromXCoord=20;
 ScattererMeasurements.ToXCoord=30;
 ScattererMeasurements.FromYCoord=20;
 ScattererMeasurements.ToYCoord=30;
-% end test
+% test till here
 
 % task; unify two function MeshParameters_hoge... and GenerateMesh_hoge
 MeshParam = MeshParameters_squarefaces_squaresubgrid(MeshMeasurements);
@@ -123,12 +123,10 @@ gauss_center.y=0.5*MeshMeasurements.YCoord;
 % Future tasks; modify att into nested structures like att.e(e).bound
 att = attribute_f_and_e(sC,sG,UpdateNum, MeshNum);
 
-cdt=0.50;
+cdt=0.50
 
 % Future tasks; utilize spatial-FI-like calculation in Constitutive
-disp('Constitutive: CALLING')
 [kappa,b_area,att,MeshNum]=Constitutive(cdt,sC,sG,UpdateNum,edgevec,first_pIdx,att,MeshNum);
-disp('Constitutive: ENDED')
 kappaoverZ=kappa.*Zinv_p;
 
 %% calculating initial distribution of Bz
@@ -138,12 +136,9 @@ InitVal ...
 
 %% Obtain Time-marching Matrix  for single timestep
 
-% #4: combine both space-time and spatial FI in order to make the size of D
-% small
-disp('Divide_into_induced_subgraphs:CALLING')
+% #4: combine both space-time and spatial FI in order to make the size of D small
 [subG_bin,subG_sizes,allIdx_stFI,UpdateNum] ...
     = Divide_into_induced_subgraphs(sC,UpdateNum,MeshNum,att);
-disp('Divide_into_induced_subgraphs:ENDED')
 
 [Taskorder,task,D,Ctrans] ...
     = Obtain_TaskOrderandIncMat(sC,UpdateNum,allIdx_stFI,subG_bin,subG_sizes,att,first_pIdx,MeshNum);
@@ -151,10 +146,8 @@ disp('Divide_into_induced_subgraphs:ENDED')
 D_tildeD_Zinv=[D;Ctrans * spdiags(kappaoverZ,0,MeshNum.P,MeshNum.P)];
 clearvars D Ctrans
 
-disp('Construct_TMM_Explicit:CALLING')
 [TMM_Explicit] ...
     = Construct_TMM_Explicit(Taskorder,task,D_tildeD_Zinv,kappaoverZ,sC,UpdateNum,subG_bin,first_pIdx,MeshNum);
-disp('Construct_TMM_Explicit:ENDED')
 
 %% Execute Explicit Calculation 
 
@@ -164,7 +157,7 @@ variables_f_then_e=[InitVal.f; InitVal.e];
 number_of_steps=100
 
 CalPeriod=cdt * number_of_steps;
-disp(['Executing Calculation: from ct = ',num2str(time), ' to ct = ',num2str(time+CalPeriod)])
+disp(['Executing Calculation: from ct = ',num2str(time), ' to ct = ',num2str(time+CalPeriod),' with cdt = ',num2str(cdt)])
 
 time = time + CalPeriod;
 [variables_f_then_e] ...

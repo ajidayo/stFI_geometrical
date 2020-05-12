@@ -1,14 +1,18 @@
 function [Zinv_p]...
     = Impedance_SquareScatterer(ImpedanceParam,ScattererMeasurements,sC,UpdateNum,first_pIdx,MeshNum,MeshParam,MeshMeasurements)
+global DISPDEBUGGINGMESSAGE
+
 %% allocation
 impedance_inverse_f=zeros(MeshNum.F,1);
 impedance_inverse_e=zeros(MeshNum.E,1);
 Zinv_p=zeros(MeshNum.P,1);
 
+
+
 %%
-
-disp('initializing impedance')
-
+if DISPDEBUGGINGMESSAGE
+    disp('initializing impedance')
+end
 %% for f faces
 
 for f=1:MeshNum.F

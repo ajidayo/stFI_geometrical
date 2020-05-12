@@ -1,5 +1,9 @@
 function [TMM_Explicit] ...
     = Construct_TMM_Explicit(Taskorder,task,D_tildeD_Zinv,kappaoverZ,sC,UpdateNum,subG_bin,first_pIdx,MeshNum)
+global DISPDEBUGGINGMESSAGE
+if DISPDEBUGGINGMESSAGE
+   disp('Construct_TMM_Explicit:CALLED')
+end
 TMM_Intermidiate=spalloc(MeshNum.P,MeshNum.P,5*MeshNum.P);
 TMM_Intermidiate=TMM_Intermidiate+speye(MeshNum.P);
 
@@ -72,6 +76,7 @@ clearvars TMM_Intermidiate
 %disp('TMM_Explicit calculated')
 
 %disp('checkpoint echo')
-
-%disp('Obtain_TMM_Explicit: ENDED')
+if DISPDEBUGGINGMESSAGE
+    disp('Obtain_TMM_Explicit: ENDED')
+end
 end

@@ -1,13 +1,14 @@
 function [sC,sG,UpdateNum,edgevec,first_pIdx,tilde_f,MeshNum,MeshParam] ...
     = GenerateMesh_squarefaces_squaresubgrid(UpdateNum_subgrid,MeshParam)
 
-disp('GenerateMesh_square_belt:CALLED')
-
 global DIM
-
+global DISPDEBUGGINGMESSAGE 
+  
+if DISPDEBUGGINGMESSAGE 
+    disp('GenerateMesh_square_belt:CALLED')
+    disp('Initializing Spatial Mesh Information ')
+end
 %global MeshNum
-
-disp('Initializing Spatial Mesh Information ')
 
 MeshParam.FacePerRow_Subgrid=...
     4*(MeshParam.Fine_X_to-MeshParam.Fine_X_from+1)...
@@ -52,9 +53,10 @@ MeshParam.coarse_NNum_latter=MeshParam.Size_X*(MeshParam.Size_Y-MeshParam.Fine_Y
 MeshNum.N=MeshParam.coarse_NNum_former+MeshParam.fine_NNum+MeshParam.coarse_NNum_latter;
 
 %% check
-disp('Check; [MeshNum.F, MeshNum.E, MeshNum.N]=')
-disp([MeshNum.F MeshNum.E MeshNum.N])
-
+if DISPDEBUGGINGMESSAGE
+    disp('Check; [MeshNum.F, MeshNum.E, MeshNum.N]=')
+    disp([MeshNum.F MeshNum.E MeshNum.N])
+end
 %% Allocate Arrays
 sC=sparse(MeshNum.F,MeshNum.E);
 sG=sparse(MeshNum.E,MeshNum.N);
@@ -1592,7 +1594,10 @@ PNum=p-1;
 MeshNum.P=PNum;
 
 %% END
-disp('GenerateMesh_square_belt:ENDED')
+if DISPDEBUGGINGMESSAGE 
+    disp('GenerateMesh_square_belt:ENDED')
+end
+
 
 
 end
