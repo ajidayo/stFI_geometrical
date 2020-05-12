@@ -12,7 +12,7 @@ DISPCAUTIONMESSAGE =true
 DISPDEBUGGINGMESSAGE = true
 DOEIGVANALYSIS =true
 
-%% Spatial Meshing and Impedance for belt-like subgrid region with triangle faces 
+%% Input (1): Spatial Meshing and Impedance for belt-like subgrid region with triangle faces 
 
 % Img_MeshMeasLocation=imread('MeshMeasurements_triangle_belt.png');
 % image(Img_MeshMeasLocation)
@@ -36,7 +36,7 @@ DOEIGVANALYSIS =true
 %     +(MeshParam.Fine_Y_to-MeshParam.Fine_Y_from+1)/2.0...
 %     +(MeshParam.Size_Y-MeshParam.Fine_Y_to));
 
-%% Spatial Meshing and Impedance for belt-like subgrid region only with square faces
+%% Input (2): Spatial Meshing and Impedance for belt-like subgrid region only with square faces
 
 % Img_MeshMeasLocation=imread('MeshMeasurements_square_belt.png');
 % image(Img_MeshMeasLocation)
@@ -80,10 +80,11 @@ DOEIGVANALYSIS =true
 %     +(MeshParam.Fine_Y_to-MeshParam.Fine_Y_from+1)/2.0...
 %     +(MeshParam.Size_Y-MeshParam.Fine_Y_to));
 
-%% Spatial Meshing and Impedance for square-like subgrid region only with square faces
+%% Input (3): Spatial Meshing and Impedance for square-like subgrid region only with square faces
 
-%Img_MeshMeasLocation=imread('MeshMeasurements_square_belt.png');
-%image(Img_MeshMeasLocation)
+% task: replace image to a correct one
+Img_MeshMeasLocation=imread('MeshMeasurements_square_belt.png');
+image(Img_MeshMeasLocation)
 % MeshMeasurements=MeshMeasurements_100times100_SquareBelt_belt65to85;
 
 %% test
