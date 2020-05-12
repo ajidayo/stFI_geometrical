@@ -10,7 +10,7 @@ EPSILON = 10^(-7)
 DIM = 2; %number of spatial dimensions: DO NOT CHANGE unless you rewrited the codes for 3D analysis
 DISPCAUTIONMESSAGE =true
 DISPDEBUGGINGMESSAGE = true
-DOEIGVANALYSIS =false
+DOEIGVANALYSIS =true
 
 %% Spatial Meshing and Impedance for belt-like subgrid region with triangle faces 
 
@@ -130,7 +130,7 @@ gauss_center.y=0.5*MeshMeasurements.YCoord;
 % Future tasks; modify att into nested structures like att.e(e).bound
 att = attribute_f_and_e(sC,sG,UpdateNum, MeshNum);
 
-cdt=0.51;
+cdt=0.50;
 
 % Future tasks; adapt Constitutive to partially non-orthogonal grids:DONE
 % but not been tested yet
@@ -175,7 +175,7 @@ disp('Construct_TMM_Explicit:ENDED')
 time=0;
 variables_f_then_e=[InitVal.f; InitVal.e];
 
-number_of_steps=1000000
+number_of_steps=100
 
 CalPeriod=cdt * number_of_steps;
 disp(['Executing Calculation: from ct = ',num2str(time), ' to ct = ',num2str(time+CalPeriod)])
@@ -192,7 +192,7 @@ plot_bface_general(b_f,b_area,tilde_f,MeshParam,MeshNum)
 if DOEIGVANALYSIS ==true
     disp('Calculating Eigenvalues')
     
-    eigenvalues = eigs(TMM_Explicit,100,'largestabs');
+    eigenvalues = eigs(TMM_Explicit,10,'largestabs','SubspaceDimension', 100);
     figure
     theta = linspace(0,2*pi);
     x = cos(theta);
@@ -203,13 +203,18 @@ if DOEIGVANALYSIS ==true
     axis equal
     EigValAbs=abs(eigenvalues);
     EigvEpsilon=10^(-7);
+    NoEigvConvergeFlag = ~any(~isnan(EigValAbs));
+    % NaN entry is blocked by "find" since comparison including NaN always
+    % returns false.
     IdxUnstabEigVal=find(EigValAbs>1+EigvEpsilon);
-    if size(IdxUnstabEigVal,1)==0
+    if size(IdxUnstabEigVal,1)==0 && ~NoEigvConvergeFlag
         disp(['stable for cdt = ',num2str(cdt),' (EigvEpsilon = ',num2str(EigvEpsilon),')'])
         %disp(EigValAbs)
-    else
+    elseif ~NoEigvConvergeFlag
         disp(['unstable for cdt = ',num2str(cdt),' (EigvEpsilon = ',num2str(EigvEpsilon),')'])
         %disp(EigValAbs)
+    else
+        disp('ERROR: None of the eigenvaules converged.')    
     end
 end
 
