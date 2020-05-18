@@ -10,7 +10,7 @@ EPSILON = 10^(-7)
 DIM = 2; %number of spatial dimensions: DO NOT CHANGE unless you rewrited the codes for 3D analysis
 DISPCAUTIONMESSAGE =true
 DISPDEBUGGINGMESSAGE = true
-DOEIGVANALYSIS =false
+DOEIGVANALYSIS = true
 
 %% Input (1): Spatial Meshing and Impedance for belt-like subgrid region with triangle faces 
 
@@ -85,18 +85,31 @@ DOEIGVANALYSIS =false
 Img_MeshMeasLocation=imread('MeshMeasurements_squarefaces_squaresubgrid.png');
 image(Img_MeshMeasLocation)
 
-% test
-MeshMeasurements.XCoord=100;
-MeshMeasurements.YCoord=100;
-MeshMeasurements.FineStartAtXCoord=15;
-MeshMeasurements.FineEndAtXCoord=35;
-MeshMeasurements.FineStartAtYCoord=15;
-MeshMeasurements.FineEndAtYCoord=35;
-ScattererMeasurements.FromXCoord=20;
-ScattererMeasurements.ToXCoord=30;
-ScattererMeasurements.FromYCoord=20;
-ScattererMeasurements.ToYCoord=30;
-% test till here
+% test 1
+% MeshMeasurements.XCoord=100;
+% MeshMeasurements.YCoord=100;
+% MeshMeasurements.FineStartAtXCoord=15;
+% MeshMeasurements.FineEndAtXCoord=35;
+% MeshMeasurements.FineStartAtYCoord=15;
+% MeshMeasurements.FineEndAtYCoord=35;
+% ScattererMeasurements.FromXCoord=20;
+% ScattererMeasurements.ToXCoord=30;
+% ScattererMeasurements.FromYCoord=20;
+% ScattererMeasurements.ToYCoord=30;
+% test 1 till here
+
+% test 2
+MeshMeasurements.XCoord=10;
+MeshMeasurements.YCoord=10;
+MeshMeasurements.FineStartAtXCoord=6;
+MeshMeasurements.FineEndAtXCoord=9;
+MeshMeasurements.FineStartAtYCoord=6;
+MeshMeasurements.FineEndAtYCoord=9;
+ScattererMeasurements.FromXCoord=7;
+ScattererMeasurements.ToXCoord=8;
+ScattererMeasurements.FromYCoord=7;
+ScattererMeasurements.ToYCoord=8;
+% test 2 till here
 
 % task; unify two function MeshParameters_hoge... and GenerateMesh_hoge
 MeshParam = MeshParameters_squarefaces_squaresubgrid(MeshMeasurements);
@@ -107,14 +120,14 @@ UpdateNum_subgrid=2;
     = GenerateMesh_squarefaces_squaresubgrid(UpdateNum_subgrid,MeshParam);
 
 ImpedanceParam.freespace=1.0;
-ImpedanceParam.medium=0.01;
+ImpedanceParam.medium=1.0;
 %Zinv_p=ones(MeshNum.P,1);
  Zinv_p...
      = Impedance_SquareScatterer(ImpedanceParam,ScattererMeasurements,sC,UpdateNum,first_pIdx,MeshNum,MeshParam,MeshMeasurements);
 disp('Initial conditions: Gaussian Distribution of Bz, centered at the Dead center of the mesh')
 
 GaussParam.Ampl=1;
-GaussParam.relaxfact=10;
+GaussParam.relaxfact=1;
 gauss_center.x=0.5*MeshMeasurements.XCoord;
 gauss_center.y=0.5*MeshMeasurements.YCoord;
 
@@ -123,16 +136,16 @@ gauss_center.y=0.5*MeshMeasurements.YCoord;
 % Future tasks; modify att into nested structures like att.e(e).bound
 att = attribute_f_and_e(sC,sG,UpdateNum, MeshNum);
 
-cdt=0.50
+cdt=0.55
 
 % Future tasks; utilize spatial-FI-like calculation in Constitutive
-[kappa,b_area,att,MeshNum]=Constitutive(cdt,sC,sG,UpdateNum,edgevec,first_pIdx,att,MeshNum);
+[kappa,Area_spatialfaces,att,MeshNum]=Constitutive(cdt,sC,sG,UpdateNum,edgevec,first_pIdx,att,MeshNum);
 kappaoverZ=kappa.*Zinv_p;
 
 %% calculating initial distribution of Bz
 
 InitVal ...
-    =GaussianDistributBz(GaussParam,tilde_f,b_area,MeshNum,gauss_center);
+    =GaussianDistributBz(GaussParam,tilde_f,Area_spatialfaces,MeshNum,gauss_center);
 
 %% Obtain Time-marching Matrix  for single timestep
 
@@ -154,7 +167,7 @@ clearvars D Ctrans
 time=0;
 variables_f_then_e=[InitVal.f; InitVal.e];
 
-number_of_steps=100
+number_of_steps=1000000
 
 CalPeriod=cdt * number_of_steps;
 disp(['Executing Calculation: from ct = ',num2str(time), ' to ct = ',num2str(time+CalPeriod),' with cdt = ',num2str(cdt)])
@@ -165,13 +178,13 @@ time = time + CalPeriod;
 
 b_f = variables_f_then_e(1:MeshNum.F);
 disp(['plotting Bz at ct = ', num2str(time)])
-plot_bface_general(b_f,b_area,tilde_f,MeshParam,MeshNum)
+plot_bface_general(b_f,Area_spatialfaces,tilde_f,MeshParam,MeshNum)
 
 %% Eigenvalue Analysis
 if DOEIGVANALYSIS ==true
     disp('Calculating Eigenvalues')
     
-    eigenvalues = eigs(TMM_Explicit,10,'largestabs','SubspaceDimension', 100);
+    eigenvalues = eigs(TMM_Explicit,20,'largestabs');
     figure
     theta = linspace(0,2*pi);
     x = cos(theta);
@@ -181,19 +194,30 @@ if DOEIGVANALYSIS ==true
     plot(eigv_re,eigv_im,'or',x,y,'-b')
     axis equal
     EigValAbs=abs(eigenvalues);
-    EigvEpsilon=10^(-7);
-    NoEigvConvergeFlag = ~any(~isnan(EigValAbs));
+    EigvEpsilon=10^(-12);
+    % NoEigvConvergeFlag = ~any(~isnan(EigValAbs));
+    % AnyEigvNonConvergeFlag = any(isnan(EigValAbs));
     % NaN entry is blocked by "find" since comparison including NaN always
     % returns false.
     IdxUnstabEigVal=find(EigValAbs>1+EigvEpsilon);
-    if size(IdxUnstabEigVal,1)==0 && ~NoEigvConvergeFlag
-        disp(['stable for cdt = ',num2str(cdt),' (EigvEpsilon = ',num2str(EigvEpsilon),')'])
-        %disp(EigValAbs)
-    elseif ~NoEigvConvergeFlag
-        disp(['unstable for cdt = ',num2str(cdt),' (EigvEpsilon = ',num2str(EigvEpsilon),')'])
-        %disp(EigValAbs)
+    if  ~any(~isnan(EigValAbs))
+        disp('None of the eigenvalues congverged.')
+    elseif any(isnan(EigValAbs))
+        disp('Some of the eigenvalues did not congverge')
+        if size(IdxUnstabEigVal,1)~=0
+            disp(['unstable for cdt = ',num2str(cdt),' (EigvEpsilon = ',num2str(EigvEpsilon),')'])
+            %disp(EigValAbs)
+        else
+            disp('(The absolute values of the converged eigenvalues were equal to or less than unity.)')
+        end
     else
-        disp('ERROR: None of the eigenvaules converged.')    
+        if size(IdxUnstabEigVal,1)==0
+            disp(['stable for cdt = ',num2str(cdt),' (EigvEpsilon = ',num2str(EigvEpsilon),')'])
+            %disp(EigValAbs)
+        else
+            disp(['unstable for cdt = ',num2str(cdt),' (EigvEpsilon = ',num2str(EigvEpsilon),')'])
+            %disp(EigValAbs)
+        end
     end
 end
 
