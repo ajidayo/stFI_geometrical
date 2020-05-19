@@ -115,9 +115,10 @@ ScattererMeasurements.ToYCoord=8;
 MeshParam = MeshParameters_squarefaces_squaresubgrid(MeshMeasurements);
 MeshParam.deltaboundary=1.0/12.0;
 MeshParam.deltacorner=0; % Not used yet
-UpdateNum_subgrid=2;
+% UpdateNum_subgrid=2;
+MeshParam.UpdateNum_subgrid=2;
 [sC,sG,UpdateNum,edgevec,first_pIdx,tilde_f,MeshNum,MeshParam] ...
-    = GenerateMesh_squarefaces_squaresubgrid(UpdateNum_subgrid,MeshParam);
+    = GenerateMesh_squarefaces_squaresubgrid(MeshParam);
 
 ImpedanceParam.freespace=1.0;
 ImpedanceParam.medium=1.0;
@@ -136,7 +137,7 @@ gauss_center.y=0.5*MeshMeasurements.YCoord;
 % Future tasks; modify att into nested structures like att.e(e).bound
 att = attribute_f_and_e(sC,sG,UpdateNum, MeshNum);
 
-cdt=0.55
+cdt=0.50
 
 % Future tasks; utilize spatial-FI-like calculation in Constitutive
 [kappa,Area_spatialfaces,att,MeshNum]=Constitutive(cdt,sC,sG,UpdateNum,edgevec,first_pIdx,att,MeshNum);

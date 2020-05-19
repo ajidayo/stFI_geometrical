@@ -1,5 +1,5 @@
 function [sC,sG,UpdateNum,edgevec,first_pIdx,tilde_f,MeshNum,MeshParam] ...
-    = GenerateMesh_squarefaces_squaresubgrid(UpdateNum_subgrid,MeshParam)
+    = GenerateMesh_squarefaces_squaresubgrid(MeshParam)
 
 global DIM
 global DISPDEBUGGINGMESSAGE 
@@ -931,7 +931,8 @@ for j=MeshParam.Fine_Y_from:MeshParam.Fine_Y_to
                 if j==MeshParam.Fine_Y_from
                     if localfaceIdx ==1
                         edgevec.prim(e).vec(1)=0.5    +MeshParam.deltaboundary;
-                        edgevec.prim(e).vec(2)=1.0/6.0+MeshParam.deltaboundary;
+                        % edgevec.prim(e).vec(2)=1.0/6.0+MeshParam.deltaboundary;
+                        edgevec.prim(e).vec(2)=1.0/6.0;
                     elseif localfaceIdx == 2
                         edgevec.prim(e).vec(1)=0.5+MeshParam.deltaboundary-1.0/6.0;
                         edgevec.prim(e).vec(2)=0.0;
@@ -956,7 +957,8 @@ for j=MeshParam.Fine_Y_from:MeshParam.Fine_Y_to
                     elseif localfaceIdx ==3
                        % disp(e)
                         edgevec.prim(e).vec(1)= 0.5    +MeshParam.deltaboundary;
-                        edgevec.prim(e).vec(2)=-1.0/6.0-MeshParam.deltaboundary;
+                        % edgevec.prim(e).vec(2)=-1.0/6.0-MeshParam.deltaboundary;
+                        edgevec.prim(e).vec(2)=-1.0/6.0;
                     elseif localfaceIdx ==4
                         edgevec.prim(e).vec(1)= 0.5+MeshParam.deltaboundary-1.0/6.0;
                         edgevec.prim(e).vec(2)= 0.0;   
@@ -1028,10 +1030,12 @@ for i=MeshParam.Fine_X_from:MeshParam.Fine_X_to
         edgevec.prim(e).vec(2)=0.0;
         if i==MeshParam.Fine_X_from && localedgeIdx ==1
             edgevec.prim(e).vec(1)= 0.5    +MeshParam.deltaboundary;
-            edgevec.prim(e).vec(2)=-1.0/6.0-MeshParam.deltaboundary;
+           % edgevec.prim(e).vec(2)=-1.0/6.0-MeshParam.deltaboundary;
+           edgevec.prim(e).vec(2)=-1.0/6.0;
         elseif i==MeshParam.Fine_X_to && localedgeIdx ==2
             edgevec.prim(e).vec(1)= 0.5    +MeshParam.deltaboundary;
-            edgevec.prim(e).vec(2)= 1.0/6.0+MeshParam.deltaboundary;            
+           % edgevec.prim(e).vec(2)= 1.0/6.0+MeshParam.deltaboundary;            
+           edgevec.prim(e).vec(2)= 1.0/6.0;
         elseif localedgeIdx ==1
             edgevec.prim(e).vec(1)= 0.5;
             edgevec.prim(e).vec(2)=-1.0/6.0;
@@ -1134,7 +1138,8 @@ for j=MeshParam.Fine_Y_from:MeshParam.Fine_Y_to
             if i==MeshParam.Fine_X_from
                 if j==MeshParam.Fine_Y_from
                     if localedgeIdx==1
-                        edgevec.prim(e).vec(1)= 1.0/6.0+MeshParam.deltaboundary;
+                        % edgevec.prim(e).vec(1)= 1.0/6.0+MeshParam.deltaboundary;
+                        edgevec.prim(e).vec(1)= 1.0/6.0;                       
                         edgevec.prim(e).vec(2)= 0.5    +MeshParam.deltaboundary;
                     elseif localedgeIdx==2
                         edgevec.prim(e).vec(1)=-1.0/6.0;
@@ -1148,7 +1153,8 @@ for j=MeshParam.Fine_Y_from:MeshParam.Fine_Y_to
                         edgevec.prim(e).vec(1)= 1.0/6.0;
                         edgevec.prim(e).vec(2)= 0.5;
                     elseif localedgeIdx==2
-                        edgevec.prim(e).vec(1)=-1.0/6.0-MeshParam.deltaboundary;
+                        % edgevec.prim(e).vec(1)=-1.0/6.0-MeshParam.deltaboundary;
+                        edgevec.prim(e).vec(1)=-1.0/6.0;                       
                         edgevec.prim(e).vec(2)= 0.5    +MeshParam.deltaboundary;
                     elseif localedgeIdx==4
                         edgevec.prim(e).vec(1)= 0.0;
@@ -1165,7 +1171,7 @@ for j=MeshParam.Fine_Y_from:MeshParam.Fine_Y_to
                 end
             else
                 if j==MeshParam.Fine_Y_from
-                       if localedgeIdx==1
+                    if localedgeIdx==1
                         edgevec.prim(e).vec(1)=0.0;
                         edgevec.prim(e).vec(2)=0.5+MeshParam.deltaboundary;
                     elseif localedgeIdx==3
@@ -1196,7 +1202,8 @@ for j=MeshParam.Fine_Y_from:MeshParam.Fine_Y_to
             +MeshParam.ENum_X;
         if j==MeshParam.Fine_Y_from
             if localedgeIdx==1
-                edgevec.prim(e).vec(1)=-1.0/6.0-MeshParam.deltaboundary;
+                % edgevec.prim(e).vec(1)=-1.0/6.0-MeshParam.deltaboundary;
+                edgevec.prim(e).vec(1)=-1.0/6.0;
                 edgevec.prim(e).vec(2)= 0.5 +MeshParam.deltaboundary;
             elseif localedgeIdx==2
                 edgevec.prim(e).vec(1)= 1.0/6.0;
@@ -1207,7 +1214,8 @@ for j=MeshParam.Fine_Y_from:MeshParam.Fine_Y_to
                 edgevec.prim(e).vec(1)=-1.0/6.0;
                 edgevec.prim(e).vec(2)= 0.5;
             elseif localedgeIdx==2
-                edgevec.prim(e).vec(1)= 1.0/6.0+MeshParam.deltaboundary;
+                % edgevec.prim(e).vec(1)= 1.0/6.0+MeshParam.deltaboundary;
+                edgevec.prim(e).vec(1)= 1.0/6.0;
                 edgevec.prim(e).vec(2)= 0.5    +MeshParam.deltaboundary;
             end
         else
@@ -1548,7 +1556,7 @@ for j=MeshParam.Fine_Y_from:MeshParam.Fine_Y_to
                 +4*(i-MeshParam.Fine_X_from)+MeshParam.Fine_X_from-1 ...
                 +MeshParam.FacePerRow_Subgrid*(j-MeshParam.Fine_Y_from) ...
                 +MeshParam.coarse_FNum_former;
-        UpdateNum.f(f)=UpdateNum_subgrid;
+        UpdateNum.f(f)=MeshParam.UpdateNum_subgrid;
         end
     end
 end
