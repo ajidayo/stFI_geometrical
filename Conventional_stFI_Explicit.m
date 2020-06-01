@@ -1,4 +1,4 @@
-clear;
+% clear;
 
 global DIM
 global DISPDEBUGGINGMESSAGE
@@ -9,20 +9,24 @@ DIM=2;
 DISPDEBUGGINGMESSAGE=true;
 DISPCAUTIONMESSAGE=true;
 DOEIGVANALYSIS=true;
-number_of_steps=100;
-cdt=0.30;
+% number_of_steps=1;
+% cdt=0.5;
+
+RANDOMLYINITIALIZE=false;
 
 %% test
-MeshParam.Size_X=10;
-MeshParam.Size_Y=10;
-MeshParam.Fine_X_from=6;
-MeshParam.Fine_X_to=8;
-MeshParam.Fine_Y_from=6;
-MeshParam.Fine_Y_to=8;
-MeshParam.deltaboundary=1.0/12.0;
+% MeshParam.Size_X=100;
+% MeshParam.Size_Y=100;
+% MeshParam.Fine_X_from=21;
+% MeshParam.Fine_X_to=40;
+% MeshParam.Fine_Y_from=21;
+% MeshParam.Fine_Y_to=40;
+% MeshParam.deltaboundary=1.0/12.0;
 %% end test
 
-F=struct('Ex',[],'Ey',[],'Bz',[]);
+Updated=zeros(MeshParam.Size_X,MeshParam.Size_Y);
+
+F=struct('Ex',[],'Ey',[],'Bz',[],'ExPreserve',[],'EyPreserve',[]);
 for j=1:MeshParam.Size_Y
     for i=1:MeshParam.Size_X
         if MeshParam.Fine_X_from <=i && i <= MeshParam.Fine_X_to ...
@@ -30,32 +34,63 @@ for j=1:MeshParam.Size_Y
             F(i,j).Ex=zeros(2,2);
             F(i,j).Ey=zeros(2,2);
             F(i,j).Bz=zeros(2,2);
+            if i== MeshParam.Fine_X_from && j== MeshParam.Fine_Y_from
+                F(i,j).EyPreserve=0;
+                F(i,j).ExPreserve=0;
+            elseif i== MeshParam.Fine_X_from
+                F(i,j).EyPreserve=0;
+            elseif j== MeshParam.Fine_Y_from
+                F(i,j).ExPreserve=0;
+            end
+            if RANDOMLYINITIALIZE==true
+                F(i,j).Ex=0.5*rand(2,2);
+                F(i,j).Ey=0.5*rand(2,2);
+                F(i,j).Bz=0.25*rand(2,2);
+            end
         elseif i == MeshParam.Fine_X_to+1 && MeshParam.Fine_Y_from <= j && j <= MeshParam.Fine_Y_to
             F(i,j).Ex=zeros(1,1);
             F(i,j).Ey=zeros(1,2);
-            F(i,j).Bz=zeros(1,1);        
-        elseif j == MeshParam.Fine_Y_to+1 && MeshParam.Fine_X_from <= i && i <= MeshParam.Fine_X_to 
+            F(i,j).EyPreserve=0;
+            F(i,j).Bz=zeros(1,1);
+            if RANDOMLYINITIALIZE==true
+                F(i,j).Ex=rand(1,1);
+                F(i,j).Ey=0.5*rand(1,2);
+                F(i,j).Bz=rand(1,1);
+            end
+        elseif j == MeshParam.Fine_Y_to+1 && MeshParam.Fine_X_from <= i && i <= MeshParam.Fine_X_to
             F(i,j).Ex=zeros(2,1);
+            F(i,j).ExPreserve=0;
             F(i,j).Ey=zeros(1,1);
             F(i,j).Bz=zeros(1,1);
+            if RANDOMLYINITIALIZE==true
+                F(i,j).Ex=0.5*rand(2,1);
+                F(i,j).Ey=rand(1,1);
+                F(i,j).Bz=rand(1,1);
+            end
         else
             F(i,j).Ex=zeros(1,1);
             F(i,j).Ey=zeros(1,1);
             F(i,j).Bz=zeros(1,1);
+            if RANDOMLYINITIALIZE==true
+                F(i,j).Ex=rand(1,1);
+                F(i,j).Ey=rand(1,1);
+                F(i,j).Bz=rand(1,1);
+            end
         end
     end
 end
 
 %%
 GaussParam.Ampl=1;
-GaussParam.relaxfact=1;
-GaussParam.Xcenter=0.5*MeshMeasurements.XCoord;
-GaussParam.Ycenter=0.5*MeshMeasurements.YCoord;
+GaussParam.relaxfact=10;
+GaussParam.XCenter=0.5*MeshParam.Size_X;
+GaussParam.YCenter=0.5*MeshParam.Size_Y;
 disp(['A sigma =',num2str(GaussParam.Ampl),', ', num2str(GaussParam.relaxfact)])
-disp(['gauss_center.x,  gauss_center.y =',num2str(gauss_center.x), ', ', num2str(gauss_center.y)])
+disp(['GaussParam.XCenter,  GaussParam.YCenter =',num2str(GaussParam.XCenter), ', ', num2str(GaussParam.YCenter)])
 
 %%
 MeshParam.UpdateNum_subgrid=2;
+cdt_subgrid=cdt/MeshParam.UpdateNum_subgrid;
 delta=MeshParam.deltaboundary;
 Area.Bz_next2outercorner=0.5*(1-delta+1-delta+1.0/6.0)/2.0 ...
     +(0.5+delta)*(1-delta+1.0/6.0+1-delta)/2.0 ...
@@ -67,8 +102,21 @@ Area.Bz_insideboundary=0.5*(0.5+delta+0.5+delta-1.0/6.0)*0.5;
 Area.Bz_innercorner=2*0.5*(0.5+delta-1.0/6.0)*(0.5+delta);
 Area.E_insideboundary_smaller=0.5*(0.5+delta-1.0/6.0+0.5+delta-1.0/6.0+cdt^2/6.0)*cdt_subgrid;
 Area.E_insideboundary_larger =0.5*(0.5+delta        +0.5+delta        +cdt^2/6.0)*cdt_subgrid;
+Area.E_innercorner=0.5*( ...
+    ((sqrt(10))^(-1))*(1.5+3*MeshParam.deltaboundary+1.0/6.0)...
+    +((sqrt(10))^(-1))*(1.5+3*MeshParam.deltaboundary+cdt^2/2.0+1.0/6.0)...
+    )*cdt_subgrid;
+
+if ~RANDOMLYINITIALIZE
+    [F] = Initialize_Conventional_stFI_Explicit_w_GaussianDistribution(F,GaussParam,MeshParam,Area);
+end
+
 
 %%
 for timestep=1:number_of_steps
-   F=Update_Conventional_stFI_Explicit(F,cdt,MeshParam,Area);
+    timestep
+   [F,Updated] = Update_Conventional_stFI_Explicit(F,cdt,MeshParam,Area,Updated);
 end
+
+[B_mesh_Conventional] = Plot_Bz_ConventionalstFI(F,MeshParam,Area);
+

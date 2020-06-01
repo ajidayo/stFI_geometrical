@@ -10,10 +10,10 @@ EPSILON = 10^(-7)
 DIM = 2; %number of spatial dimensions: DO NOT CHANGE unless you rewrited the codes for 3D analysis
 DISPCAUTIONMESSAGE =true
 DISPDEBUGGINGMESSAGE = true
-DOEIGVANALYSIS = true
+DOEIGVANALYSIS = false;
 
 %% Input (1): Spatial Meshing and Impedance for belt-like subgrid region with triangle faces 
-
+% figure
 % Img_MeshMeasLocation=imread('MeshMeasurements_triangle_belt.png');
 % image(Img_MeshMeasLocation)
 
@@ -39,7 +39,7 @@ DOEIGVANALYSIS = true
 %     +(MeshParam.Size_Y-MeshParam.Fine_Y_to));
 
 %% Input (2): Spatial Meshing and Impedance for belt-like subgrid region only with square faces
-
+% figure
 % Img_MeshMeasLocation=imread('MeshMeasurements_square_belt.png');
 % image(Img_MeshMeasLocation)
 % % MeshMeasurements=MeshMeasurements_100times100_SquareBelt_belt65to85;
@@ -82,6 +82,7 @@ DOEIGVANALYSIS = true
 
 %% Input (3): Spatial Meshing and Impedance for square-like subgrid region only with square faces
 
+figure
 Img_MeshMeasLocation=imread('MeshMeasurements_squarefaces_squaresubgrid.png');
 image(Img_MeshMeasLocation)
 
@@ -99,16 +100,16 @@ image(Img_MeshMeasLocation)
 % test 1 till here
 
 % test 2
-MeshMeasurements.XCoord=10;
-MeshMeasurements.YCoord=10;
-MeshMeasurements.FineStartAtXCoord=6;
-MeshMeasurements.FineEndAtXCoord=9;
-MeshMeasurements.FineStartAtYCoord=6;
-MeshMeasurements.FineEndAtYCoord=9;
-ScattererMeasurements.FromXCoord=7;
-ScattererMeasurements.ToXCoord=8;
-ScattererMeasurements.FromYCoord=7;
-ScattererMeasurements.ToYCoord=8;
+MeshMeasurements.XCoord=100;
+MeshMeasurements.YCoord=100;
+MeshMeasurements.FineStartAtXCoord=60;
+MeshMeasurements.FineEndAtXCoord=80;
+MeshMeasurements.FineStartAtYCoord=60;
+MeshMeasurements.FineEndAtYCoord=80;
+ScattererMeasurements.FromXCoord=66;
+ScattererMeasurements.ToXCoord=75;
+ScattererMeasurements.FromYCoord=66;
+ScattererMeasurements.ToYCoord=75;
 % test 2 till here
 
 % task; unify two function MeshParameters_hoge... and GenerateMesh_hoge
@@ -128,7 +129,7 @@ ImpedanceParam.medium=1.0;
 disp('Initial conditions: Gaussian Distribution of Bz, centered at the Dead center of the mesh')
 
 GaussParam.Ampl=1;
-GaussParam.relaxfact=1;
+GaussParam.relaxfact=10;
 gauss_center.x=0.5*MeshMeasurements.XCoord;
 gauss_center.y=0.5*MeshMeasurements.YCoord;
 
@@ -137,7 +138,7 @@ gauss_center.y=0.5*MeshMeasurements.YCoord;
 % Future tasks; modify att into nested structures like att.e(e).bound
 att = attribute_f_and_e(sC,sG,UpdateNum, MeshNum);
 
-cdt=0.50
+cdt=2
 
 % Future tasks; utilize spatial-FI-like calculation in Constitutive
 [kappa,Area_spatialfaces,att,MeshNum]=Constitutive(cdt,sC,sG,UpdateNum,edgevec,first_pIdx,att,MeshNum);
@@ -168,7 +169,7 @@ clearvars D Ctrans
 time=0;
 variables_f_then_e=[InitVal.f; InitVal.e];
 
-number_of_steps=1000000
+number_of_steps=1
 
 CalPeriod=cdt * number_of_steps;
 disp(['Executing Calculation: from ct = ',num2str(time), ' to ct = ',num2str(time+CalPeriod),' with cdt = ',num2str(cdt)])
@@ -179,8 +180,7 @@ time = time + CalPeriod;
 
 b_f = variables_f_then_e(1:MeshNum.F);
 disp(['plotting Bz at ct = ', num2str(time)])
-plot_bface_general(b_f,Area_spatialfaces,tilde_f,MeshParam,MeshNum)
-
+[B_mesh_Proposed,Area_squareoid]=plot_bface_general(b_f,Area_spatialfaces,tilde_f,MeshParam,MeshNum);
 %% Eigenvalue Analysis
 if DOEIGVANALYSIS ==true
     disp('Calculating Eigenvalues')
@@ -224,9 +224,14 @@ end
 
 %% Error to Conventional stFI
 
-%b_error=b_reduced-b_obi;
-%plot_bface_general(b_error,b_area,tilde_node_position,Size_X,Size_Y,FNum)
+Conventional_stFI_Explicit
 
+B_mesh_Error=B_mesh_Proposed-B_mesh_Conventional;
 
+if any(any(B_mesh_Error > EPSILON))
+    disp('ERROR')
+end
+figure
+mesh(B_mesh_Error.')
 %% far-future tasks
 % include PML, PEC tasks.
