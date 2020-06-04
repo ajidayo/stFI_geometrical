@@ -1,4 +1,4 @@
-function [F] = Initialize_Conventional_stFI_Explicit_w_GaussianDistribution(F,GaussParam,MeshParam,Area)
+function [F] = Initialize_Conventional_stFI_Explicit_w_GaussianDistribution(F,GaussParam,MeshParam,MeshFaceAreas)
 
 for j=1:MeshParam.Fine_Y_from-2
     for i=1:MeshParam.Size_X
@@ -23,19 +23,19 @@ for j=MeshParam.Fine_Y_from-1:(MeshParam.Fine_Y_to+1)-(MeshParam.Fine_Y_from-1):
         x=i-0.5;
         y=j-0.5;
         F(i,j).Bz=GaussParam.Ampl*exp(-((x-GaussParam.XCenter)^2+(y-GaussParam.XCenter)^2)/GaussParam.relaxfact) ...
-            *Area.Bz_outercorner;
+            *MeshFaceAreas.Bz_outercorner;
     end
     for i=MeshParam.Fine_X_from:MeshParam.Fine_X_to-MeshParam.Fine_X_from:MeshParam.Fine_X_to
         x=i-0.5;
         y=j-0.5;
         F(i,j).Bz=GaussParam.Ampl*exp(-((x-GaussParam.XCenter)^2+(y-GaussParam.XCenter)^2)/GaussParam.relaxfact) ...
-            *Area.Bz_next2outercorner;
+            *MeshFaceAreas.Bz_next2outercorner;
     end
     for i=MeshParam.Fine_X_from+1:MeshParam.Fine_X_to-1
         x=i-0.5;
         y=j-0.5;
         F(i,j).Bz=GaussParam.Ampl*exp(-((x-GaussParam.XCenter)^2+(y-GaussParam.XCenter)^2)/GaussParam.relaxfact) ...
-            *Area.Bz_outsideboundary;
+            *MeshFaceAreas.Bz_outsideboundary;
     end
 end
 for i=MeshParam.Fine_X_from-1:(MeshParam.Fine_X_to+1)-(MeshParam.Fine_X_from-1):MeshParam.Fine_X_to+1
@@ -43,19 +43,19 @@ for i=MeshParam.Fine_X_from-1:(MeshParam.Fine_X_to+1)-(MeshParam.Fine_X_from-1):
         x=i-0.5;
         y=j-0.5;
         F(i,j).Bz=GaussParam.Ampl*exp(-((x-GaussParam.XCenter)^2+(y-GaussParam.XCenter)^2)/GaussParam.relaxfact) ...
-            *Area.Bz_outercorner;
+            *MeshFaceAreas.Bz_outercorner;
     end
     for j=MeshParam.Fine_Y_from:MeshParam.Fine_Y_to-MeshParam.Fine_Y_from:MeshParam.Fine_Y_to
         x=i-0.5;
         y=j-0.5;
         F(i,j).Bz=GaussParam.Ampl*exp(-((x-GaussParam.XCenter)^2+(y-GaussParam.XCenter)^2)/GaussParam.relaxfact) ...
-            *Area.Bz_next2outercorner;
+            *MeshFaceAreas.Bz_next2outercorner;
     end
     for j=MeshParam.Fine_Y_from+1:MeshParam.Fine_Y_to-1
         x=i-0.5;
         y=j-0.5;
         F(i,j).Bz=GaussParam.Ampl*exp(-((x-GaussParam.XCenter)^2+(y-GaussParam.XCenter)^2)/GaussParam.relaxfact) ...
-            *Area.Bz_outsideboundary;
+            *MeshFaceAreas.Bz_outsideboundary;
     end
 end
 
@@ -98,7 +98,7 @@ for j=MeshParam.Fine_Y_from:MeshParam.Fine_Y_to-MeshParam.Fine_Y_from:MeshParam.
             y=j-0.75+0.5*(localjIdx-1);
             F(i,j).Bz(localiIdx,localjIdx)=...
                 GaussParam.Ampl*exp(-((x-GaussParam.XCenter)^2+(y-GaussParam.XCenter)^2)/GaussParam.relaxfact) ...
-                *Area.Bz_insideboundary;
+                *MeshFaceAreas.Bz_insideboundary;
         end
     end
 end
@@ -124,7 +124,7 @@ for j=MeshParam.Fine_Y_from+1:MeshParam.Fine_Y_to-1
             y=j-0.75+0.5*(localjIdx-1);
             F(i,j).Bz(localiIdx,localjIdx)=...
                 GaussParam.Ampl*exp(-((x-GaussParam.XCenter)^2+(y-GaussParam.XCenter)^2)/GaussParam.relaxfact) ...
-                *Area.Bz_insideboundary;
+                *MeshFaceAreas.Bz_insideboundary;
         end
     end
 end
@@ -145,7 +145,7 @@ for j=MeshParam.Fine_Y_from:MeshParam.Fine_Y_to-MeshParam.Fine_Y_from:MeshParam.
         y=j-0.75+0.5*(localjIdx-1);
         F(i,j).Bz(localiIdx,localjIdx)=...
             GaussParam.Ampl*exp(-((x-GaussParam.XCenter)^2+(y-GaussParam.XCenter)^2)/GaussParam.relaxfact) ...
-            *Area.Bz_innercorner;
+            *MeshFaceAreas.Bz_innercorner;
         if i==MeshParam.Fine_X_from
             localiIdx=2;
         else
@@ -155,7 +155,7 @@ for j=MeshParam.Fine_Y_from:MeshParam.Fine_Y_to-MeshParam.Fine_Y_from:MeshParam.
         y=j-0.75+0.5*(localjIdx-1);
         F(i,j).Bz(localiIdx,localjIdx)=...
             GaussParam.Ampl*exp(-((x-GaussParam.XCenter)^2+(y-GaussParam.XCenter)^2)/GaussParam.relaxfact) ...
-            *Area.Bz_insideboundary;
+            *MeshFaceAreas.Bz_insideboundary;
         if j==MeshParam.Fine_Y_from
             localjIdx=2;
         else
@@ -175,7 +175,7 @@ for j=MeshParam.Fine_Y_from:MeshParam.Fine_Y_to-MeshParam.Fine_Y_from:MeshParam.
         y=j-0.75+0.5*(localjIdx-1);
         F(i,j).Bz(localiIdx,localjIdx)=...
             GaussParam.Ampl*exp(-((x-GaussParam.XCenter)^2+(y-GaussParam.XCenter)^2)/GaussParam.relaxfact) ...
-            *Area.Bz_insideboundary;        
+            *MeshFaceAreas.Bz_insideboundary;        
     end
 end
 

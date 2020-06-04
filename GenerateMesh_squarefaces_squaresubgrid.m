@@ -1170,7 +1170,7 @@ for j=MeshParam.Fine_Y_from:MeshParam.Fine_Y_to
                         edgevec.prim(e).vec(2)= 0.5+MeshParam.deltaboundary-1.0/6.0;
                     end
                 elseif j==MeshParam.Fine_Y_to
-                    if localedgeIdx == 3
+                    if localedgeIdx ==2
                         edgevec.prim(e).vec(1)= 0.0;
                         edgevec.prim(e).vec(2)= 0.5+MeshParam.deltaboundary;
                     elseif localedgeIdx == 4

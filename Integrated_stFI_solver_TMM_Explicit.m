@@ -138,7 +138,7 @@ gauss_center.y=0.5*MeshMeasurements.YCoord;
 % Future tasks; modify att into nested structures like att.e(e).bound
 att = attribute_f_and_e(sC,sG,UpdateNum, MeshNum);
 
-cdt=2
+cdt=0.5
 
 % Future tasks; utilize spatial-FI-like calculation in Constitutive
 [kappa,Area_spatialfaces,att,MeshNum]=Constitutive(cdt,sC,sG,UpdateNum,edgevec,first_pIdx,att,MeshNum);
@@ -229,7 +229,7 @@ Conventional_stFI_Explicit
 B_mesh_Error=B_mesh_Proposed-B_mesh_Conventional;
 
 if any(any(B_mesh_Error > EPSILON))
-    disp('ERROR')
+    disp('Error between Proposed method and conventional method exests')
 end
 figure
 mesh(B_mesh_Error.')

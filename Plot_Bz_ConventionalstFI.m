@@ -1,4 +1,4 @@
-function [B_mesh] = Plot_Bz_ConventionalstFI(F,MeshParam,Area)
+function [B_mesh] = Plot_Bz_ConventionalstFI(F,MeshParam,MeshFaceAreas)
 
 B_mesh=zeros(MeshParam.Size_X,MeshParam.Size_Y);
 area_squareoid=zeros(MeshParam.Size_X,MeshParam.Size_Y);
@@ -23,7 +23,7 @@ for j=1:MeshParam.Size_Y
                     B_mesh(i,j)=B_mesh(i,j)+F(i,j).Bz(localiIdx,localjIdx);
                 end
             end
-            area_squareoid(i,j)=0.5+2*Area.Bz_insideboundary;
+            area_squareoid(i,j)=0.5+2*MeshFaceAreas.Bz_insideboundary;
         elseif ((i==MeshParam.Fine_X_from || i == MeshParam.Fine_X_to) && ...
                 (j==MeshParam.Fine_Y_from || j == MeshParam.Fine_Y_to))
             for localjIdx=1:2
@@ -31,23 +31,23 @@ for j=1:MeshParam.Size_Y
                     B_mesh(i,j)=B_mesh(i,j)+F(i,j).Bz(localiIdx,localjIdx);
                 end
             end
-            area_squareoid(i,j)=0.25+Area.Bz_innercorner+2*Area.Bz_insideboundary;
+            area_squareoid(i,j)=0.25+MeshFaceAreas.Bz_innercorner+2*MeshFaceAreas.Bz_insideboundary;
         elseif ((i == MeshParam.Fine_X_from-1 || i == MeshParam.Fine_X_to+1)...
                 && MeshParam.Fine_Y_from+1 <= j && j <= MeshParam.Fine_Y_to-1) ...
                 || ((j == MeshParam.Fine_Y_from-1 || j == MeshParam.Fine_Y_to+1)...
                 && MeshParam.Fine_X_from+1 <= i && i <= MeshParam.Fine_X_to-1)
             B_mesh(i,j)=F(i,j).Bz;
-            area_squareoid(i,j)=Area.Bz_outsideboundary;
+            area_squareoid(i,j)=MeshFaceAreas.Bz_outsideboundary;
         elseif ((i==MeshParam.Fine_X_from || i == MeshParam.Fine_X_to) && ...
                 (j==MeshParam.Fine_Y_from-1 || j == MeshParam.Fine_Y_to+1)) || ...
                 ((j==MeshParam.Fine_Y_from || j == MeshParam.Fine_Y_to) && ...
                 (i==MeshParam.Fine_X_from-1 || i == MeshParam.Fine_X_to+1))
             B_mesh(i,j)=F(i,j).Bz;
-            area_squareoid(i,j)=Area.Bz_next2outercorner;
+            area_squareoid(i,j)=MeshFaceAreas.Bz_next2outercorner;
         elseif ((i==MeshParam.Fine_X_from-1 || i == MeshParam.Fine_X_to+1) && ...
                 (j==MeshParam.Fine_Y_from-1 || j == MeshParam.Fine_Y_to+1))
             B_mesh(i,j)=F(i,j).Bz;
-            area_squareoid(i,j)=Area.Bz_outercorner;
+            area_squareoid(i,j)=MeshFaceAreas.Bz_outercorner;
         else
             B_mesh(i,j)=F(i,j).Bz;
             area_squareoid(i,j)=1.0;

@@ -90,33 +90,19 @@ disp(['GaussParam.XCenter,  GaussParam.YCenter =',num2str(GaussParam.XCenter), '
 
 %%
 MeshParam.UpdateNum_subgrid=2;
-cdt_subgrid=cdt/MeshParam.UpdateNum_subgrid;
-delta=MeshParam.deltaboundary;
-Area.Bz_next2outercorner=0.5*(1-delta+1-delta+1.0/6.0)/2.0 ...
-    +(0.5+delta)*(1-delta+1.0/6.0+1-delta)/2.0 ...
-    -0.5*delta*(1-delta);
-Area.Bz_outercorner=2*0.5*1.0*(1-delta);
-Area.Bz_outsideboundary=2*0.5*(1-delta+1.0/6.0+1-delta)/2.0;
-Area.E_outsideboundary=(1.0-MeshParam.deltaboundary)*cdt-cdt^3/12.0;
-Area.Bz_insideboundary=0.5*(0.5+delta+0.5+delta-1.0/6.0)*0.5;
-Area.Bz_innercorner=2*0.5*(0.5+delta-1.0/6.0)*(0.5+delta);
-Area.E_insideboundary_smaller=0.5*(0.5+delta-1.0/6.0+0.5+delta-1.0/6.0+cdt^2/6.0)*cdt_subgrid;
-Area.E_insideboundary_larger =0.5*(0.5+delta        +0.5+delta        +cdt^2/6.0)*cdt_subgrid;
-Area.E_innercorner=0.5*( ...
-    ((sqrt(10))^(-1))*(1.5+3*MeshParam.deltaboundary+1.0/6.0)...
-    +((sqrt(10))^(-1))*(1.5+3*MeshParam.deltaboundary+cdt^2/2.0+1.0/6.0)...
-    )*cdt_subgrid;
+
+[MeshFaceAreas]=CalculateMeshFaceAreas(MeshParam,cdt);
 
 if ~RANDOMLYINITIALIZE
-    [F] = Initialize_Conventional_stFI_Explicit_w_GaussianDistribution(F,GaussParam,MeshParam,Area);
+    [F] = Initialize_Conventional_stFI_Explicit_w_GaussianDistribution(F,GaussParam,MeshParam,MeshFaceAreas);
 end
 
 
 %%
 for timestep=1:number_of_steps
     timestep
-   [F,Updated] = Update_Conventional_stFI_Explicit(F,cdt,MeshParam,Area,Updated);
+   [F,Updated] = Update_Conventional_stFI_Explicit(F,cdt,MeshParam,MeshFaceAreas,Updated);
 end
 
-[B_mesh_Conventional] = Plot_Bz_ConventionalstFI(F,MeshParam,Area);
+[B_mesh_Conventional] = Plot_Bz_ConventionalstFI(F,MeshParam,MeshFaceAreas);
 

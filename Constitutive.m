@@ -67,24 +67,24 @@ for e_tar=1:MeshNum.E
     if att.e.boundaryedge(e_tar)==false
         continue;
     end
-    
+
     UpdNum_e_tar=UpdateNum.e(e_tar);
     p_tar=first_pIdx.e(e_tar);
     
     endpoints_e_tar = endpoint(e_tar,sG);
     endpoints_e_tar_tilde=find(sC(:,e_tar));
     
-    DirVec_e_tar=DirectionVecPrim(e_tar,edgevec);
-    %DirVec_etilde_tar=DirectionVecDual(e_tar,edgevec);
+    DirVec_e_tar      =DirectionVecPrim(e_tar,edgevec);
+    DirVec_e_tar_tilde=DirectionVecDual(e_tar,edgevec);
     e_connec_to_ep1=e_connec2ntar_shareincfwith_e_tar(endpoints_e_tar(1),e_tar,sC,sG,edgevec);
     e_connec_to_ep2=e_connec2ntar_shareincfwith_e_tar(endpoints_e_tar(2),e_tar,sC,sG,edgevec);
     % correct directions of vec_e1c, vec_e2c: the direction is the same
     % as the direction of edgevec.dual.(the direction of g, or tilde e)
     for e_con=1:2
         e_connec_to_ep1(e_con).DirVec=e_connec_to_ep1(e_con).DirVec...
-            *sign(DirVec_e_tar.'*e_connec_to_ep1(e_con).DirVec);
+            *sign(DirVec_e_tar_tilde.'*e_connec_to_ep1(e_con).DirVec);
         e_connec_to_ep2(e_con).DirVec=e_connec_to_ep2(e_con).DirVec...
-            *sign(DirVec_e_tar.'*e_connec_to_ep2(e_con).DirVec);
+            *sign(DirVec_e_tar_tilde.'*e_connec_to_ep2(e_con).DirVec);
     end
     Parallel=ParaCheck_e_cons(e_connec_to_ep1,e_connec_to_ep2);
     if Parallel.is==true
@@ -155,6 +155,103 @@ for e_tar=1:MeshNum.E
     kappa(p_tar-UpdNum_e_tar)=kappa(p_tar);
 end
 
+%% test
+
+% if false
+%     e_tar=6063
+%     att.e.boundaryedge(e_tar)
+%     
+%     UpdNum_e_tar=UpdateNum.e(e_tar)
+%     p_tar=first_pIdx.e(e_tar);
+%     
+%     endpoints_e_tar = endpoint(e_tar,sG)
+%     endpoints_e_tar_tilde=find(sC(:,e_tar))
+%     
+%     DirVec_e_tar      =DirectionVecPrim(e_tar,edgevec)    
+%     DirVec_e_tar_tilde=DirectionVecDual(e_tar,edgevec)
+%     %DirVec_etilde_tar=DirectionVecDual(e_tar,edgevec);
+%     e_connec_to_ep1=e_connec2ntar_shareincfwith_e_tar(endpoints_e_tar(1),e_tar,sC,sG,edgevec)
+%     e_connec_to_ep2=e_connec2ntar_shareincfwith_e_tar(endpoints_e_tar(2),e_tar,sC,sG,edgevec)
+%     % correct directions of vec_e1c, vec_e2c: the direction is the same
+%     % as the direction of edgevec.dual.(the direction of g, or tilde e)
+%     for e_con=1:2
+%         e_connec_to_ep1(e_con).DirVec=e_connec_to_ep1(e_con).DirVec...
+%             *sign(DirVec_e_tar_tilde.'*e_connec_to_ep1(e_con).DirVec);
+%         e_connec_to_ep2(e_con).DirVec=e_connec_to_ep2(e_con).DirVec...
+%             *sign(DirVec_e_tar_tilde.'*e_connec_to_ep2(e_con).DirVec);
+%     end
+%     Parallel=ParaCheck_e_cons(e_connec_to_ep1,e_connec_to_ep2);
+%     if Parallel.is==true
+%         DirVec_NodeDelta=e_connec_to_ep1(Parallel.e_con_ep1_Idx).DirVec
+%     else
+%         if DISPCAUTIONMESSAGE
+%             disp(['CAUTION: Cannot define DirVec_NodeDelta for e_tar = ', num2str(e_tar),'; function ''Constitutive'' treats e_tar as an subgrid corner edge'])
+%         end
+%         att.e.corner(e_tar)=true;
+%     end
+%     costheta=DirVec_NodeDelta.'*DirVec_e_tar
+%     sintheta=sqrt(1-costheta^2)
+%     
+%     if att.e.nonorthogonal(e_tar)==true
+%         disp(['UNEXPECTED INPUT: boundary edge e =',num2str(e_tar),',which is NOT a subgrid-corner edge, is nonorthogonal to it''s dual.'])
+%         disp(['Note: nonorthogonal edges are acceptable ',...
+%             '(1) when they are NOT UpdateNum-varying boundaries',...
+%             '(2) when they are UpdateNum-varying boundaries and locates at the corners of the subgrid.'])
+%         disp('pausing... press CTRL+C to stop running')
+%         pause
+%     end
+%     
+%     for timesection=1:UpdNum_e_tar
+%         p_tar=p_tar+1;
+%         timing_p_target=(timesection-0.5)/UpdNum_e_tar;
+%         Length_e_tar=sqrt(edgevec.prim(e_tar).vec.'*edgevec.prim(e_tar).vec);
+%         Area_p_tar=Length_e_tar*cdt/UpdNum_e_tar;
+%         Length_tilde_e_tar=sqrt(edgevec.dual(e_tar).vec.'*edgevec.dual(e_tar).vec);
+%         kappa(p_tar) = Length_tilde_e_tar/Area_p_tar;
+%         
+%         stn_Future_ep1=first_stn_n(endpoints_e_tar(1))+timesection;
+%         stn_Future_ep2=first_stn_n(endpoints_e_tar(2))+timesection;
+%         stn_Past_ep1  =first_stn_n(endpoints_e_tar(1))+timesection-1;
+%         stn_Past_ep2  =first_stn_n(endpoints_e_tar(2))+timesection-1;
+%         if timesection == 1
+%             stnInfo(stn_Past_ep1).NodeDeltaVec=[0;0]
+%             stnInfo(stn_Past_ep2).NodeDeltaVec=[0;0]
+%         end
+%         
+%         UdNf1=UpdateNum.f(endpoints_e_tar_tilde(1));
+%         % calculate difference_time
+%         for j=1:UdNf1
+%             % can be written without if
+%             if (1.0/UdNf1)*(j-1)< timing_p_target && timing_p_target < (1.0/UdNf1)*j
+%                 timing_ep1tilde=(1.0/UdNf1)*(j-0.5)
+%                 break;
+%             end
+%         end
+%         UdNf2=UpdateNum.f(endpoints_e_tar_tilde(2));
+%         for j=1:UdNf2
+%             if (1.0/UdNf2)*(j-1)< timing_p_target && timing_p_target < (1.0/UdNf2)*j
+%                 timing_ep2tilde=(1.0/UdNf2)*(j-0.5)
+%                 break;
+%             end
+%         end
+%         
+%         DeltaTime_etilde=cdt*(...
+%             sC(endpoints_e_tar_tilde(1),e_tar)*timing_ep1tilde+sC(endpoints_e_tar_tilde(2),e_tar)*timing_ep2tilde)
+%         DeltaArea=DeltaTime_etilde/kappa(p_tar) % N.B. delta_area has sign
+%         delta_position=DeltaArea/(Length_e_tar*sintheta)
+%         stnInfo(stn_Future_ep1).NodeDeltaVec=...
+%             stnInfo(stn_Past_ep1).NodeDeltaVec+delta_position*DirVec_NodeDelta
+%         stnInfo(stn_Future_ep2).NodeDeltaVec=...
+%             stnInfo(stn_Past_ep2).NodeDeltaVec+delta_position*DirVec_NodeDelta
+%         
+%         LorenzInvariant_dS(p_tar)=-Length_tilde_e_tar^2+DeltaTime_etilde^2;
+%         kappa(p_tar)=sign(LorenzInvariant_dS(p_tar))*kappa(p_tar);
+%     end
+%     LorenzInvariant_dS(p_tar-UpdNum_e_tar)=LorenzInvariant_dS(p_tar);
+%     kappa(p_tar-UpdNum_e_tar)=kappa(p_tar);
+% end
+
+
 %% calculate kappa for corners
 if DISPDEBUGGINGMESSAGE==true
     disp('calculating kappa for corner-boundary edges')
@@ -162,7 +259,7 @@ end
 
 for e_tar=1:MeshNum.E
     if att.e.boundaryedge(e_tar)==false || att.e.corner(e_tar)==false
-         continue;
+        continue;
     end
     UpdNum_e_tar=UpdateNum.e(e_tar);
     p_tar=first_pIdx.e(e_tar);
