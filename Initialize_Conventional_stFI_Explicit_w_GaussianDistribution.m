@@ -1,5 +1,8 @@
 function [F] = Initialize_Conventional_stFI_Explicit_w_GaussianDistribution(F,GaussParam,MeshParam,MeshFaceAreas)
 
+MeshFaceAreas.Bz_innercorner    = MeshFaceAreas.Bz_innercorner_Initial;
+MeshFaceAreas.Bz_insideboundary = MeshFaceAreas.Bz_insideboundary_Initial;
+
 for j=1:MeshParam.Fine_Y_from-2
     for i=1:MeshParam.Size_X
         x=i-0.5;

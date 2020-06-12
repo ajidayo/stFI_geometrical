@@ -1,9 +1,11 @@
 F_Bz_symmetrical_error=zeros(MeshParam.Size_X,MeshParam.Size_Y);
 
+Epsilon_SymmetryTest=10^(-14);
+
 for j=1:MeshParam.Size_Y
     for i=1:MeshParam.Size_X
         Temp=F(i,j).Bz-F(j,i).Bz.';
-        UnSymFlag=any(any(find(Temp>EPSILON)));
+        UnSymFlag=any(any(find(Temp>Epsilon_SymmetryTest)));
         if UnSymFlag
             disp(['unsymmetric found: i=',num2str(i),', j=',num2str(j)])
         end

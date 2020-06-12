@@ -3,10 +3,14 @@ function [F,Updated] = Update_Conventional_stFI_Explicit(F,cdt,MeshParam,MeshFac
 cdt_subgrid=cdt/MeshParam.UpdateNum_subgrid;
 
 [F]=Update_E_CoarseRegion(F,cdt,MeshParam,MeshFaceAreas);
+MeshFaceAreas.Bz_innercorner    = MeshFaceAreas.Bz_innercorner_Initial;
+MeshFaceAreas.Bz_insideboundary = MeshFaceAreas.Bz_insideboundary_Initial;
 [F,Updated]=Update_E_RegionBoundary_FirstTimeSec(F,cdt,cdt_subgrid,MeshParam,MeshFaceAreas,Updated);
 [F]=Update_E_FineRegion(F,cdt_subgrid,MeshParam);
 [F]=Update_Bz_FineRegion(F,MeshParam);
 for TimeSec=2:MeshParam.UpdateNum_subgrid
+    MeshFaceAreas.Bz_innercorner    = MeshFaceAreas.Bz_innercorner_HemiStep;
+    MeshFaceAreas.Bz_insideboundary = MeshFaceAreas.Bz_insideboundary_HemiStep;
     [F]=Update_E_RegionBoundary_NotFirstTimeSec(F,cdt_subgrid,MeshParam,MeshFaceAreas);   
     [F]=Update_E_FineRegion(F,cdt_subgrid,MeshParam);
     [F]=Update_Bz_FineRegion(F,MeshParam);

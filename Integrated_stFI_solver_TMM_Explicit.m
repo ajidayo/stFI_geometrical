@@ -1,3 +1,18 @@
+%%
+% Spatial (reference) mesh is 2D, consisting primal-faces f, primal-edges
+% e, primal-nodes n, dual-edges tilde_e, and dual-nodes tilde_f
+% as it's elements.
+% Note that "tilde_()" means the dual countarpart of f 
+% e.g. tilde_f is a dual node which is the dual-counterpart of f.
+% Incidence relations in the reference mesh are denoted as incedence
+% matrices sC (face-edge), and sG (edge-node).
+% The actual positions, lengths, areas, and directions of the elements are
+% encoded in edgevec (primal-edges represented as 2-D vectors), and
+% tilde_f.position (dual-nodes represented as it's position vector).
+% Space-time (generated) mesh is 3D, consisting faces p, hypersurfaces Omega, nodes stn.
+% Incidence relations in the generated space-time mesh are denoted as incidence martices 
+% D (hypersurface-face), and C (face-edge).
+%%
 clear;
 
 global EPSILON
@@ -12,7 +27,7 @@ DISPCAUTIONMESSAGE =true
 DISPDEBUGGINGMESSAGE = true
 DOEIGVANALYSIS = false;
 
-%% Input (1): Spatial Meshing and Impedance for belt-like subgrid region with triangle faces 
+%% Input, Case (1): Spatial Meshing and Impedance for belt-like subgrid region with triangle faces 
 % figure
 % Img_MeshMeasLocation=imread('MeshMeasurements_triangle_belt.png');
 % image(Img_MeshMeasLocation)
@@ -38,7 +53,7 @@ DOEIGVANALYSIS = false;
 %     +(MeshParam.Fine_Y_to-MeshParam.Fine_Y_from+1)/2.0...
 %     +(MeshParam.Size_Y-MeshParam.Fine_Y_to));
 
-%% Input (2): Spatial Meshing and Impedance for belt-like subgrid region only with square faces
+%% Input, Case (2): Spatial Meshing and Impedance for belt-like subgrid region only with square faces
 % figure
 % Img_MeshMeasLocation=imread('MeshMeasurements_square_belt.png');
 % image(Img_MeshMeasLocation)
@@ -80,7 +95,7 @@ DOEIGVANALYSIS = false;
 %     +(MeshParam.Fine_Y_to-MeshParam.Fine_Y_from+1)/2.0...
 %     +(MeshParam.Size_Y-MeshParam.Fine_Y_to));
 
-%% Input (3): Spatial Meshing and Impedance for square-like subgrid region only with square faces
+%% Input, Case (3): Spatial Meshing and Impedance for square-like subgrid region only with square faces
 
 figure
 Img_MeshMeasLocation=imread('MeshMeasurements_squarefaces_squaresubgrid.png');
@@ -118,14 +133,21 @@ MeshParam.deltaboundary=1.0/12.0;
 MeshParam.deltacorner=0; % Not used yet
 % UpdateNum_subgrid=2;
 MeshParam.UpdateNum_subgrid=2;
+% sC: the rotation matrix of the spatial grid, sG: the gradient matrix
+% edgevec: information of the edges of the spatial mesh as an vector
+% first_pIdx: the first Index for space-time plane p corresponding to each
+% spatial {faces, edges}
+% tlide_f.position: the position of the dual node of the spatial mesh
+% MeshNum: Numbers of the spatial {faces, edges, nodes}, and space-time {planes (faces), nodes}
+% MeshParam: Parameters for the spatial mesh
 [sC,sG,UpdateNum,edgevec,first_pIdx,tilde_f,MeshNum,MeshParam] ...
     = GenerateMesh_squarefaces_squaresubgrid(MeshParam);
 
 ImpedanceParam.freespace=1.0;
 ImpedanceParam.medium=1.0;
-%Zinv_p=ones(MeshNum.P,1);
- Zinv_p...
-     = Impedance_SquareScatterer(ImpedanceParam,ScattererMeasurements,sC,UpdateNum,first_pIdx,MeshNum,MeshParam,MeshMeasurements);
+
+ Zinv_p ...
+     = Impedance_SquareScatterer(ImpedanceParam,ScattererMeasurements,sC,UpdateNum,first_pIdx,MeshNum,MeshParam);
 disp('Initial conditions: Gaussian Distribution of Bz, centered at the Dead center of the mesh')
 
 GaussParam.Ampl=1;
@@ -163,13 +185,14 @@ clearvars D Ctrans
 
 [TMM_Explicit] ...
     = Construct_TMM_Explicit(Taskorder,task,D_tildeD_Zinv,kappaoverZ,sC,UpdateNum,subG_bin,first_pIdx,MeshNum);
-
+% The act of "TMM_Explicit" on vector [{f_face};{f_edge}] represents the
+% time-marching of DoFs for a single global-timestep-width cdt.
 %% Execute Explicit Calculation 
 
 time=0;
 variables_f_then_e=[InitVal.f; InitVal.e];
 
-number_of_steps=1
+number_of_steps=10000
 
 CalPeriod=cdt * number_of_steps;
 disp(['Executing Calculation: from ct = ',num2str(time), ' to ct = ',num2str(time+CalPeriod),' with cdt = ',num2str(cdt)])
@@ -229,7 +252,7 @@ Conventional_stFI_Explicit
 B_mesh_Error=B_mesh_Proposed-B_mesh_Conventional;
 
 if any(any(B_mesh_Error > EPSILON))
-    disp('Error between Proposed method and conventional method exests')
+    disp('Error between Proposed method and conventional method exists')
 end
 figure
 mesh(B_mesh_Error.')

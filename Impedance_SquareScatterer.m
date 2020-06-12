@@ -1,5 +1,5 @@
 function [Zinv_p]...
-    = Impedance_SquareScatterer(ImpedanceParam,ScattererMeasurements,sC,UpdateNum,first_pIdx,MeshNum,MeshParam,MeshMeasurements)
+    = Impedance_SquareScatterer(ImpedanceParam,ScattererMeasurements,sC,UpdateNum,first_pIdx,MeshNum,MeshParam)
 global DISPDEBUGGINGMESSAGE
 
 %% allocation

@@ -1,5 +1,8 @@
 function [B_mesh] = Plot_Bz_ConventionalstFI(F,MeshParam,MeshFaceAreas)
 
+MeshFaceAreas.Bz_innercorner    = MeshFaceAreas.Bz_innercorner_Initial;
+MeshFaceAreas.Bz_insideboundary = MeshFaceAreas.Bz_insideboundary_Initial;
+
 B_mesh=zeros(MeshParam.Size_X,MeshParam.Size_Y);
 area_squareoid=zeros(MeshParam.Size_X,MeshParam.Size_Y);
 
