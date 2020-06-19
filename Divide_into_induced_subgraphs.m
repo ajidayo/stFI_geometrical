@@ -15,7 +15,10 @@ end
 %% omit the elements nearby the timestep-varing boundaries
 % the edges surrounding the boundary faces is omitted
 
-sComit=logical(sC); 
+%case1(defalt)
+%sComit=logical(sC); 
+%case2(for matlab ver R2018a?)
+sComit=abs(sC); 
 
 
 %disp('checkpoint alpha')
@@ -23,18 +26,21 @@ sComit=logical(sC);
 allIdx_stFI.f=find(att.f.inc_bounde==true);
 for ff=1:size(allIdx_stFI.f,1)
     f=allIdx_stFI.f(ff);
-    sComit(f,:)=false;
+    %case1(defalt)
+    %sComit(f,:)=false;
+    %case2(for matlab ver R2018a?)
+    sComit(f,:)=0;
 end
-%disp('checkpoint bravo')
-%disp('checkpoint charlie')
 
     
 %% generate graph object (not digraph)
 
 %AdjF_omit = logical(sComit * (sComit.'));
+%case1(defalt)
+%G_f_omit = graph(sComit * sComit.','omitselfloops');
+%case2(for matlab ver R2018a?)
 G_f_omit = graph(sComit * sComit.','omitselfloops');
 
-%disp('checkpoint delta')
 
 %% divide the spatial mesh into subgraphs
 % conncomp reterns the connecting components of the graph
