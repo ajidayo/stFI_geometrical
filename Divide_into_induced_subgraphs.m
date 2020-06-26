@@ -15,7 +15,7 @@ end
 %% omit the elements nearby the timestep-varing boundaries
 % the edges surrounding the boundary faces is omitted
 
-%case1(defalt)
+%case1(defalt), here is the first line where these two cases are.
 %sComit=logical(sC); 
 %case2(for matlab ver R2018a?)
 sComit=abs(sC); 
@@ -38,7 +38,7 @@ end
 %AdjF_omit = logical(sComit * (sComit.'));
 %case1(defalt)
 %G_f_omit = graph(sComit * sComit.','omitselfloops');
-%case2(for matlab ver R2018a?)
+%case2(for matlab ver R2018a?), here is the last line where these two cases are.
 G_f_omit = graph(sComit * sComit.','omitselfloops');
 
 

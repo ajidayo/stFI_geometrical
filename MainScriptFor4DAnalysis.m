@@ -1,0 +1,13 @@
+clear;
+SetParameters
+GenerateMesh
+Attribute_SpatialElements
+DivideIntoInducedSubgraphs_4Dst
+SortTasks
+Constitutive_4Dst
+Construct_TMM_explicit_4Dst
+Construct_SourceMatrix_4Dst
+Initialize
+Sources
+TimeMarching
+Plot
