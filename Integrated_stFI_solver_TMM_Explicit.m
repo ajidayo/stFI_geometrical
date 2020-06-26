@@ -192,7 +192,7 @@ clearvars D Ctrans
 time=0;
 variables_f_then_e=[InitVal.f; InitVal.e];
 
-number_of_steps=10000
+number_of_steps=100
 
 CalPeriod=cdt * number_of_steps;
 disp(['Executing Calculation: from ct = ',num2str(time), ' to ct = ',num2str(time+CalPeriod),' with cdt = ',num2str(cdt)])
