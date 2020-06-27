@@ -1,25 +1,29 @@
 clear;
 
 %% Inputs
-SelectPreset=1;% Preset {1} available. See ParameterPreset for each settings.
+SelectPreset=1;% Preset {none} available. See ParameterPreset for details for each settings.
 [RefMeshPresetType,MeshMeasurements,LocalUpdateNum] ...
                             = ParameterPreset(SelectPreset);
-[sG,sC,sD,NodePos,UpdNum,RefElemNum] ...
+[sG,sC,sD,NodePos,Num_of_Elem] ...
                             = GenerateReferenceMesh_3D_Sp(RefMeshPresetType,MeshMeasurements,LocalUpdateNum);
 %RefImpedance_SpV           = GenerateReferenceImpedancePattern();
-
+cdt                         = 0.5;
 %%
-[UpdNum,Att]                = Attributes_of_Sp_Elements(sG,sC,sD,UpdNum,RefElemNum);
-%[Task,TaskDependanceGraph] = GenerateST_FI_Tasks_4D_ST(sC,Att)
-[Task,TaskDependanceGraph]  = GenerateSp_FI_Tasks_4D_ST(sC,Att);
-TaskOrder                   = SortTasks(Task,TaskDependanceGraph);
-[D0,D1,D2,D3]               = ComputeST_Mesh(sG,sC,sD,UpdNum,RefElemNum);
-kappa                       = ComputeKappa_4D_ST(sG,sC,sD,D0,D1,D2,D3,NodePos,UpdNum,RefElemNum,Att);
+[SpElemPropreties,Num_of_Elem.STP] ...
+                            = Properties_of_Sp_Elements(sG,sC,sD,SpElemPropreties,Num_of_Elem);
+Task                        = struct;
+%[Task,TaskDependenceGraph] = GenerateST_FI_Tasks_4D_ST;
+[Task,TaskDependenceGraph]  = GenerateSp_FI_Tasks_4D_ST(sC,sD,SpElemPropreties,Task);
+TaskOrder                   = SortTasks(TaskDependenceGraph); clearvars TaskDependenceGraph
+[D0,D1,D2,D3]               = ComputeST_Mesh(sG,sC,sD,UpdNum,Num_of_Elem);
+kappa                       = ComputeKappa_4D_ST(sG,sC,sD,D0,D1,D2,D3,NodePos,SpElemPropreties,Num_of_Elem);
 Kappa_over_Z                = ComputeZ_Matrix(kappa, RefImpedance_SpV).^(-1);
-PlaceSources_in_Sp_FI_Region
-ConstructTimeMarchingMatrix_4D_ST
-SplitTMM_into_FieldsAndSources
-ExcludePEC_ST_Planes
-InitializeFields
-TimeMarch
+Source                      = PlaceSources_in_Sp_FI_Region;
+TMM                         = ConstructTimeMarchingMatrix_4D_ST(D1,D2,sC,Kappa_over_Z,Source,SpElemPropreties,Task,TaskOrder,Num_of_Elem);
+[TMM_Fields, TMM_Sources]   = SplitTMM_into_FieldsAndSources(TMM,Source);
+TMM_Fields                  = ExcludePEC_ST_Planes(TMM_Fields, SpElemPropreties);
+DoFs_FacesThenEdges         = InitializeFields;
+Num_of_Steps                = 100;
+Time                        = 0;
+DoFs_FacesThenEdges         = TimeMarch(Num_of_Steps,Time,cdt,TMM_Fields,TMM_Sources,DoFs_FacesThenEdges,Source);
 %PlotMagneticFlux

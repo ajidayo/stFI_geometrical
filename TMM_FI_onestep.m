@@ -61,6 +61,6 @@ TMM_onestep = Map_p_next_f*(Map_f_p_pres - sC*Map_p_next_e.'...
 %%% history
 TMM_onestep = TMM_onestep + spdiags(Conserve_pp,0,MeshNum.P,MeshNum.P);
 
-%[a,b,c]=find(TMM_onestep,20)
+
 
 end
