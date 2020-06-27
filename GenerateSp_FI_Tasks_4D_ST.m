@@ -40,13 +40,16 @@ for SpFI_TaskIdx=1:size(SpFI_Task,2)
 end
 
 %% add edges to task dependency graph
-
-
+for nth_SpS = find(SpElemPropreties.SpS.Belong_to_ST_FI)
+    if any(SpElemProperties.SpP.SpFI_TaskIdx(find(sC(:,nth_SpS))))
+        SpP_fetch = find(SpElemProperties.SpP.SpFI_TaskIdx(find(sC(:,nth_SpS))),1)
+    end
+end
 end
 
 %% 
 function [SpFI_TaskInfo,SpElemProperties] = EliminateST_FI_SpPs(SG_bin_SpP,SG_ElemNum_SpP,SpElemProperties)
-
+SpElemProperties.SpP.SpFI_TaskIdx=zeros(Num_of_Elem.SpP,1);
 SpFI_TaskIdx=0;
 for SGIdx=1:size(SG_ElemNum_SpP,2)
     LogiIdx=find(SG_bin_SpP==SGIdx);
