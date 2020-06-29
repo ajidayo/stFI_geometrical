@@ -12,9 +12,11 @@ cdt                         = 0.5;
 [SpElemPropreties,Num_of_Elem.STP] ...
                             = Properties_of_Sp_Elements(sG,sC,sD,SpElemPropreties,Num_of_Elem);
 Task                        = struct;
-%[Task,TaskDependenceGraph] = GenerateST_FI_Tasks_4D_ST;
-[Task,TaskDependenceGraph]  = GenerateSp_FI_Tasks_4D_ST(sC,sD,SpElemPropreties,Task);
-TaskOrder                   = SortTasks(TaskDependenceGraph); clearvars TaskDependenceGraph
+%[Task,TaskDepGraph] = GenerateST_FI_Tasks_4D_ST;
+[Task,TaskDepGraph,Map_SpElem_to_FirstGlobTask] ...
+                            = GenerateSp_FI_Tasks_4D_ST(sC,sD,SpElemPropreties,Task,TaskDepGraph,Map_SpElem_to_FirstGlobTask);
+TaskOrder                   = SortTasks(TaskDepGraph,Map_SpElem_to_FirstGlobTask,sC,SpElemPropreties);
+clearvars TaskDepGraph;
 [D0,D1,D2,D3]               = ComputeST_Mesh(sG,sC,sD,UpdNum,Num_of_Elem);
 kappa                       = ComputeKappa_4D_ST(sG,sC,sD,D0,D1,D2,D3,NodePos,SpElemPropreties,Num_of_Elem);
 Kappa_over_Z                = ComputeZ_Matrix(kappa, RefImpedance_SpV).^(-1);

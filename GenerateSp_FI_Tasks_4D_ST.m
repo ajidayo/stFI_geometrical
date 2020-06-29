@@ -1,4 +1,5 @@
-function [Task,TaskDependanceGraph] = GenerateSp_FI_Tasks_4D_ST(sC,sD,SpElemPropreties,Task)
+function [Task,TaskDependanceGraph,Map_SpElem_to_FirstGlobTask] ...
+    = GenerateSp_FI_Tasks_4D_ST(sC,sD,SpElemPropreties,Task,TaskDependanceGraph,Map_SpElem_to_FirstGlobTask)
 sDPattern_PartiallyOmitted=logical(sD);
 
 for SpP = find(SpElemPropreties.SpP.Belong_to_ST_FI)
@@ -39,7 +40,7 @@ for SpFI_TaskIdx=1:size(SpFI_Task,2)
      for CurrentTimeSec = 1:SpFI_TaskInfo(SpFI_TaskIdx).UpdNum
          GlobalTaskIdx = GlobalTaskIdx+1;
          if CurrentTimeSec == 1
-             Map_SpFI_RegionIdx_to_FirstGlobalTaskIdx(SpFI_TaskIdx) = GlobalTaskIdx;
+             Map_SpElem_to_FirstGlobTask.SpFI_RegionIdx(SpFI_TaskIdx) = GlobalTaskIdx;
          end
          Task(GlobalTaskIdx) = SpFI_TaskInfo(SpFI_TaskIdx);
          Task(GlobalTaskIdx).Type = "Sp_FI";
@@ -47,27 +48,17 @@ for SpFI_TaskIdx=1:size(SpFI_Task,2)
      end
 end
 
-%% add edges to task dependency graph
 EdgeIdx =0;
 for SpFI_TaskIdx = size(SpFI_TaskInfo,2)
-    for CurrentTimeSec = 2:SpFI_TaskIdx.UpdNum(nth_SpS)
+    for CurrentTimeSec = 2:SpFI_TaskIdx.UpdNum(SpFI_TaskIdx)
         EdgeIdx = EdgeIdx+1;
-        StaTask(EdgeIdx) = Map_SpFI_RegionIdx_to_FirstGlobalTaskIdx(SpFI_TaskIdx)-1+CurrentTimeSec-1;
-        TgtTask(EdgeIdx) = Map_SpFI_RegionIdx_to_FirstGlobalTaskIdx(SpFI_TaskIdx)-1+CurrentTimeSec;
-    end
-end
-for nth_SpS = find(SpElemPropreties.SpS.Belong_to_ST_FI)
-    SpFI_TaskIdx = max(SpElemProperties.SpP.SpFI_TaskIdx(find(sC(:,nth_SpS))));
-    if SpFI_TaskIdx > 0
-        for CurrentTimeSec = 1:SpElemProperties.SpS.UpdNum(nth_SpS)
-            EdgeIdx = EdgeIdx+1;
-            StaTask(EdgeIdx) = Map_SpFI_RegionIdx_to_FirstGlobalTaskIdx(SpFI_TaskIdx)-1+CurrentTimeSec;
-            TgtTask(EdgeIdx) = Map_SpSIdx_to_FirstGlobalTaskIdx(nth_SpS)+CurrentTimeSec;
-        end
+        StaTask(EdgeIdx) = Map_SpElem_to_FirstGlobTask.SpFI_RegionIdx(SpFI_TaskIdx)-1+CurrentTimeSec-1;
+        TgtTask(EdgeIdx) = Map_SpElem_to_FirstGlobTask.SpFI_RegionIdx(SpFI_TaskIdx)-1+CurrentTimeSec;
     end
 end
 TaskDependanceGraph = addedge(TaskDependanceGraph,StaTask,TgtTask);
 clearvars StaTask TgtTask
+
 end
 
 %% 
