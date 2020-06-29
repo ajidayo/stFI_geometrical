@@ -27,24 +27,47 @@ for SpS_tgt=1:Num_of_Elem.SpS
             SpElemProperties.SpS.SpFI_TaskIdx(SpS_tgt)=SpFI_TaskIdx;
     end
 end
-GlobalTaskIdx = size(Task,2)-1;
+switch size(Task,2)
+    case 1
+        GlobalTaskIdx = 0;
+    otherwise
+        GlobalTaskIdx = size(Task,2);
+end
 for SpFI_TaskIdx=1:size(SpFI_Task,2)
      SpFI_TaskInfo(SpFI_TaskIdx).UpdNum = ...
          SpElemProperties.SpP.UpdNum(SpFI_TaskInfo(SpFI_TaskIdx).ElemIdx.SpP(1));
-     for timesection =1:SpFI_TaskInfo(SpFI_TaskIdx).UpdNum
+     for CurrentTimeSec = 1:SpFI_TaskInfo(SpFI_TaskIdx).UpdNum
          GlobalTaskIdx = GlobalTaskIdx+1;
+         if CurrentTimeSec == 1
+             Map_SpFI_RegionIdx_to_FirstGlobalTaskIdx(SpFI_TaskIdx) = GlobalTaskIdx;
+         end
          Task(GlobalTaskIdx) = SpFI_TaskInfo(SpFI_TaskIdx);
          Task(GlobalTaskIdx).Type = "Sp_FI";
-         Task(GlobalTaskIdx).TimeSection_tgt = timesection;
+         Task(GlobalTaskIdx).TimeSection_tgt = CurrentTimeSec;
      end
 end
 
 %% add edges to task dependency graph
-for nth_SpS = find(SpElemPropreties.SpS.Belong_to_ST_FI)
-    if any(SpElemProperties.SpP.SpFI_TaskIdx(find(sC(:,nth_SpS))))
-        SpP_fetch = find(SpElemProperties.SpP.SpFI_TaskIdx(find(sC(:,nth_SpS))),1)
+EdgeIdx =0;
+for SpFI_TaskIdx = size(SpFI_TaskInfo,2)
+    for CurrentTimeSec = 2:SpFI_TaskIdx.UpdNum(nth_SpS)
+        EdgeIdx = EdgeIdx+1;
+        StaTask(EdgeIdx) = Map_SpFI_RegionIdx_to_FirstGlobalTaskIdx(SpFI_TaskIdx)-1+CurrentTimeSec-1;
+        TgtTask(EdgeIdx) = Map_SpFI_RegionIdx_to_FirstGlobalTaskIdx(SpFI_TaskIdx)-1+CurrentTimeSec;
     end
 end
+for nth_SpS = find(SpElemPropreties.SpS.Belong_to_ST_FI)
+    SpFI_TaskIdx = max(SpElemProperties.SpP.SpFI_TaskIdx(find(sC(:,nth_SpS))));
+    if SpFI_TaskIdx > 0
+        for CurrentTimeSec = 1:SpElemProperties.SpS.UpdNum(nth_SpS)
+            EdgeIdx = EdgeIdx+1;
+            StaTask(EdgeIdx) = Map_SpFI_RegionIdx_to_FirstGlobalTaskIdx(SpFI_TaskIdx)-1+CurrentTimeSec;
+            TgtTask(EdgeIdx) = Map_SpSIdx_to_FirstGlobalTaskIdx(nth_SpS)+CurrentTimeSec;
+        end
+    end
+end
+TaskDependanceGraph = addedge(TaskDependanceGraph,StaTask,TgtTask);
+clearvars StaTask TgtTask
 end
 
 %% 
@@ -54,12 +77,15 @@ SpFI_TaskIdx=0;
 for SGIdx=1:size(SG_ElemNum_SpP,2)
     LogiIdx=find(SG_bin_SpP==SGIdx);
     SpP_test=LogiIdx(1);
-    if SpElemProperties.SpP.Belong_to_ST_FI(SpP_test)==false
-        SpFI_TaskIdx=SpFI_TaskIdx+1;
-        SpFI_TaskInfo(SpFI_TaskIdx).Sp_FI_Region_tgt = SpFI_TaskIdx;
-        SpFI_TaskInfo(SpFI_TaskIdx).ElemIdx.SpP=LogiIdx;
-        SpFI_TaskInfo(SpFI_TaskIdx).ElemNum.SpP=SG_ElemNum_SpP(SGIdx);
-        SpElemProperties.SpP.SpFI_TaskIdx(LogiIdx)=SpFI_TaskIdx;
+    switch SpElemProperties.SpP.Belong_to_ST_FI(SpP_test)
+        case true
+            SpElemProperties.SpP.SpFI_TaskIdx(SpP_test)=0;
+        case false
+            SpFI_TaskIdx=SpFI_TaskIdx+1;
+            SpFI_TaskInfo(SpFI_TaskIdx).Sp_FI_Region_tgt = SpFI_TaskIdx;
+            SpFI_TaskInfo(SpFI_TaskIdx).ElemIdx.SpP=LogiIdx;
+            SpFI_TaskInfo(SpFI_TaskIdx).ElemNum.SpP=SG_ElemNum_SpP(SGIdx);
+            SpElemProperties.SpP.SpFI_TaskIdx(LogiIdx)=SpFI_TaskIdx;
     end
 end
 end
