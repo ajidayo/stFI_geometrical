@@ -5,26 +5,26 @@ UpdNum_SpP = zeros(Num_of_Elem.SpP,1);
 UpdNum_SpS = zeros(Num_of_Elem.SpS,1);
 UpdNum_SpN = zeros(Num_of_Elem.SpN,1);
 for SpP=1:Num_of_Elem.SpP
-    UpdNum_SpP(SpP) = max(UpdNum_SpV(sD(:,SpP)));
+    UpdNum_SpP(SpP) = max(UpdNum_SpV(find(sD(:,SpP))));
 end
 for SpS=1:Num_of_Elem.SpS
-    UpdNum_SpS(SpS) = max(UpdNum_SpP(sC(:,SpS)));
+    UpdNum_SpS(SpS) = max(UpdNum_SpP(find(sC(:,SpS))));
 end
 for SpN=1:Num_of_Elem.SpN
-    UpdNum_SpN(SpN) = max(UpdNum_SpS(sG(:,SpN)));
+    UpdNum_SpN(SpN) = max(UpdNum_SpS(find(sG(:,SpN))));
 end
 SpElemProperties.SpP.UpdNum=UpdNum_SpP;
 SpElemProperties.SpS.UpdNum=UpdNum_SpS;
 SpElemProperties.SpN.UpdNum=UpdNum_SpN;
 %% FirstSTPIdx
 CurrentSTPIdx=1;
-for nthSpP=1:Num_of_Elem.SpP
-    SpElemProperties.SpP.FirstSTPIdx(nthSpP) = CurrentSTPIdx;
-    CurrentSTPIdx = CurrentSTPIdx +UpdNum_SpP +1 ;
+for nth_SpP=1:Num_of_Elem.SpP
+    SpElemProperties.SpP.FirstSTPIdx(nth_SpP) = CurrentSTPIdx;
+    CurrentSTPIdx = CurrentSTPIdx +UpdNum_SpP(nth_SpP) +1 ;
 end
 for nth_SpS=1:Num_of_Elem.SpS
     SpElemProperties.SpS.FirstSTPIdx(nth_SpS) = CurrentSTPIdx;
-    CurrentSTPIdx = CurrentSTPIdx +UpdNum_SpS +1 ;
+    CurrentSTPIdx = CurrentSTPIdx +UpdNum_SpS(nth_SpS) +1 ;
 end
 Num_of_STP = CurrentSTPIdx -1;
 %% tasktype
@@ -32,23 +32,22 @@ Num_of_STP = CurrentSTPIdx -1;
 % First check if SpPs are on dt-Interfaces. Interface SpPs belongs to ST_FI-region.
 % SpPs adjacent to interface-SpPs belongs to ST_FI-region.
 AdjM_SpP_via_SpV = sD.'*sD;
-for nthSpP = 1:Num_of_Elem.SpP
+for nth_SpP = 1:Num_of_Elem.SpP
     Sum = 0;
-    IncSpV_List = find(sD(:,nthSpP));
+    IncSpV_List = find(sD(:,nth_SpP));
     for IncSpV = IncSpV_List
         Sum = Sum + SpElemProperties.SpV.UpdNum(IncSpV);  
     end
-    switch Sum == size(IncSpV_List,1)*SpElemProperties.SpV.UpdNum(IncSpV_List(1))
-        case true
-            SpElemProperties.SpP.Belong_to_ST_FI(nthSpP) = false;
-        case false 
-            SpElemProperties.SpP.Belong_to_ST_FI(nthSpP) = true;
-            SpElemProperties.SpP.Belong_to_ST_FI(find(AdjM_SpP_via_SpV(SpP,:))) = true;
+    if Sum == size(IncSpV_List,1)*SpElemProperties.SpV.UpdNum(IncSpV_List(1))
+        SpElemProperties.SpP.Belong_to_ST_FI(nth_SpP) = false;
+    else
+        SpElemProperties.SpP.Belong_to_ST_FI(nth_SpP) = true;
+        SpElemProperties.SpP.Belong_to_ST_FI(find(AdjM_SpP_via_SpV(SpP,:))) = true;
     end
 end
 % SpSs incident to ST_FI-SpPs belongs to ST_FI-region.
 for nth_SpP = find(SpElemProperties.SpP.Belong_to_ST_FI)
-    for IncSpS = find(sC(nthSpP,:))
+    for IncSpS = find(sC(nth_SpP,:))
         SpElemProperties.SpS.Belong_to_ST_FI(IncSpS) = true;
     end
 end

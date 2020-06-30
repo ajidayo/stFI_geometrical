@@ -1,5 +1,5 @@
-function [Task,TaskDependanceGraph,Map_SpElem_to_FirstGlobTask] ...
-    = GenerateSp_FI_Tasks_4D_ST(sC,sD,SpElemProperties,Task,TaskDependanceGraph,Map_SpElem_to_FirstGlobTask)
+function [Task,TaskDepGraph,Map_SpElem_to_FirstGlobTask] ...
+    = GenerateSp_FI_Tasks_4D_ST(sC,sD,SpElemProperties,Num_of_Elem,Task,TaskDepGraph,Map_SpElem_to_FirstGlobTask)
 sDPattern_PartiallyOmitted=logical(sD);
 
 for SpP = find(SpElemProperties.SpP.Belong_to_ST_FI)
@@ -11,10 +11,12 @@ Adj_SpP_PartiallyOmitted = graph(sDPattern_PartiallyOmitted.' * sDPattern_Partia
 [SG_bin_SpP,SG_ElemNum_SpP] = conncomp(Adj_SpP_PartiallyOmitted);
 clearvars Adj_SpP_PartiallyOmitted
 
-[SpFI_TaskInfo] = EliminateST_FI_SpPs(SG_bin_SpP,SG_ElemNum_SpP,SpElemProperties);
+[SpFI_TaskInfo] = EliminateST_FI_SpPs(SG_bin_SpP,SG_ElemNum_SpP,SpElemProperties,Num_of_Elem);
 clearvars SG_bin_SpP SG_ElemNum_SpP
-SpFI_TaskInfo.ElemIdx.SpS = zeros(Num_of_Elem.SpS,1);
-SpFI_TaskInfo.ElemNum.SpS = zeros(size(SpFI_TaskInfo.ElemNum.SpP,2),1);
+% for SpFI_TaskIdx =1:size(SpFI_TaskInfo,2)
+%     SpFI_TaskInfo(SpFI_TaskIdx).ElemIdx.SpS = zeros(Num_of_Elem.SpS,1);
+%     SpFI_TaskInfo(SpFI_TaskIdx).ElemNum.SpS = zeros(size(SpFI_TaskInfo.ElemNum.SpP,2),1);
+% end
 for SpS_tgt=1:Num_of_Elem.SpS
     switch SpElemProperties.SpS.Belong_to_ST_FI(SpS_tgt) || SpElemProperties.SpS.PEC(SpS_tgt)
         case true
@@ -34,7 +36,7 @@ switch size(Task,2)
     otherwise
         GlobalTaskIdx = size(Task,2);
 end
-for SpFI_TaskIdx=1:size(SpFI_Task,2)
+for SpFI_TaskIdx=1:size(SpFI_TaskInfo,2)
      SpFI_TaskInfo(SpFI_TaskIdx).UpdNum = ...
          SpElemProperties.SpP.UpdNum(SpFI_TaskInfo(SpFI_TaskIdx).ElemIdx.SpP(1));
      for CurrentTimeSec = 1:SpFI_TaskInfo(SpFI_TaskIdx).UpdNum
@@ -56,13 +58,13 @@ for SpFI_TaskIdx = size(SpFI_TaskInfo,2)
         TgtTask(EdgeIdx) = Map_SpElem_to_FirstGlobTask.SpFI_RegionIdx(SpFI_TaskIdx)-1+CurrentTimeSec;
     end
 end
-TaskDependanceGraph = addedge(TaskDependanceGraph,StaTask,TgtTask);
+TaskDepGraph = addedge(TaskDepGraph,StaTask,TgtTask);
 clearvars StaTask TgtTask
 
 end
 
 %% 
-function [SpFI_TaskInfo,SpElemProperties] = EliminateST_FI_SpPs(SG_bin_SpP,SG_ElemNum_SpP,SpElemProperties)
+function [SpFI_TaskInfo,SpElemProperties] = EliminateST_FI_SpPs(SG_bin_SpP,SG_ElemNum_SpP,SpElemProperties,Num_of_Elem)
 SpElemProperties.SpP.SpFI_TaskIdx=zeros(Num_of_Elem.SpP,1);
 SpFI_TaskIdx=0;
 for SGIdx=1:size(SG_ElemNum_SpP,2)

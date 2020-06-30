@@ -1,4 +1,4 @@
-function [sG,sC,sD,NodePos,Num_of_Elem,SpElemProperties_SpV_UpdNum] ...
+function [sG,sC,sD,NodePos,Num_of_Elem,SpElemProperties] ...
     = FDTD_RefMesh(MeshMeasurements,LocalUpdateNum)
 XSize = MeshMeasurements.XCoord/MeshMeasurements.dx;
 YSize = MeshMeasurements.YCoord/MeshMeasurements.dy;
@@ -19,7 +19,8 @@ sG = FDTD_sG(MeshMeasurements,Num_of_Elem);
 sC = FDTD_sC(MeshMeasurements,Num_of_Elem);
 sD = FDTD_sD(MeshMeasurements,Num_of_Elem);
 NodePos = FDTD_NodePos(MeshMeasurements);
-SpElemProperties_SpV_UpdNum = LocalUpdateNum*ones(Num_of_Elem.SpV,1);
+SpElemProperties.SpV.UpdNum = LocalUpdateNum*ones(Num_of_Elem.SpV,1);
+SpElemProperties.SpS.PEC    = FDTD_SpS_PEC(MeshMeasurements,Num_of_Elem);
 end
 
 function sG = FDTD_sG(MeshMeasurements,Num_of_Elem)
@@ -229,6 +230,72 @@ for ZIdx = 1:ZSize
             YPos = MeshMeasurements.dy*(YIdx-0.5);
             ZPos = MeshMeasurements.dz*(ZIdx-0.5);
             NodePos.Dual(SpNIdx).Vec = [XPos;YPos;ZPos];
+        end
+    end
+end
+end
+
+function SpElemProperties_SpS_PEC = FDTD_SpS_PEC(MeshMeasurements,Num_of_Elem)
+XSize = MeshMeasurements.XCoord/MeshMeasurements.dx;
+YSize = MeshMeasurements.YCoord/MeshMeasurements.dy;
+ZSize = MeshMeasurements.ZCoord/MeshMeasurements.dz;
+
+XEdgePerXRow        = XSize;
+XEdgePerXYPlane     = XSize*(YSize+1);
+XEdgeNum            = XSize*(YSize+1)*(ZSize+1);
+YEdgePerXRow        = XSize+1;
+YEdgePerXYPlane     = (XSize+1)*YSize;
+YEdgeNum            = (XSize+1)*YSize*(ZSize+1);
+ZEdgePerXRow        = XSize+1;
+ZEdgePerXYPlane     = (XSize+1)*(YSize+1);
+%ZEdgeNum            = (XSize+1)*(YSize+1)*ZSize;
+
+SpElemProperties_SpS_PEC = zeros(Num_of_Elem.SpS,1);
+for ZIdx = 1:ZSize+1
+    for YIdx = [1 YSize+1]
+        for XIdx = 1:XSize
+            PIdx = XIdx   + (YIdx-1)*XEdgePerXRow + (ZIdx-1)*XEdgePerXYPlane;
+            SpElemProperties_SpS_PEC(PIdx) = true;
+        end
+    end
+end
+for ZIdx = 1:ZSize
+    for YIdx = [1 YSize+1]
+        for XIdx = 1:XSize+1
+            PIdx = XIdx   + (YIdx-1)*YEdgePerXRow + (ZIdx-1)*YEdgePerXYPlane +XEdgeNum;
+            SpElemProperties_SpS_PEC(PIdx) = true;
+        end
+    end
+end
+for ZIdx = 1:ZSize+1
+    for YIdx = 1:YSize
+        for XIdx = [1 XSize+1]
+            PIdx = XIdx   + (YIdx-1)*YEdgePerXRow + (ZIdx-1)*YEdgePerXYPlane +XEdgeNum;
+            SpElemProperties_SpS_PEC(PIdx) = true;
+        end
+    end
+end
+for ZIdx = 1:ZSize
+    for YIdx = 1:YSize+1
+        for XIdx = [1 XSize+1]
+            PIdx = XIdx   + (YIdx-1)*ZEdgePerXRow + (ZIdx-1)*ZEdgePerXYPlane +XEdgeNum+YEdgeNum;
+            SpElemProperties_SpS_PEC(PIdx) = true;
+        end
+    end
+end
+for ZIdx = [1 ZSize+1]
+    for YIdx = 1:YSize+1
+        for XIdx = 1:XSize
+            PIdx = XIdx   + (YIdx-1)*XEdgePerXRow + (ZIdx-1)*XEdgePerXYPlane;
+            SpElemProperties_SpS_PEC(PIdx) = true;
+        end
+    end
+end
+for ZIdx = [1 ZSize+1]
+    for YIdx = 1:YSize
+        for XIdx = 1:XSize+1
+            PIdx = XIdx   + (YIdx-1)*YEdgePerXRow + (ZIdx-1)*YEdgePerXYPlane +XEdgeNum;
+            SpElemProperties_SpS_PEC(PIdx) = true;
         end
     end
 end

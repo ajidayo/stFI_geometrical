@@ -17,6 +17,7 @@ for SpSIdx = find(SpElemProperties.SpS.Belong_to_ST_FI)
         end
     end
 end
-TaskDependanceGraph = addedge(TaskDependanceGraph,StaTask,TgtTask);
+TaskDepGraph = addedge(TaskDepGraph,StaTask,TgtTask);
 clearvars StaTask TgtTask
+TaskOrder = toposort(TaskDepGraph);
 end
