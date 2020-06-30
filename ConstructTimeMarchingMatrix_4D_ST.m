@@ -55,50 +55,44 @@ Map_SpS_STPpres = logical(sparse(Num_of_Elem.SpP,Num_of_Elem.STP));
 
 Map_SpPinctoSpS_STPpres=logical(sparse(Num_of_Elem.SpP,Num_of_Elem.STP));
 
-% f_lst_SG is the index of "equal-to-SG_tgt" elements 
-SpP_lst_SpFI = SpFI_TaskInfo(SpFI_TaskIdx).ElemNum.SpP;
-SpS_lst_SpFI = SpFI_TaskInfo(SpFI_TaskIdx).ElemNum.SpS;
-for nthSpP  = 1:size(SpP_lst_SpFI,1)
-    SpP     = SpP_lst_SpFI(nthSpP);
-    STPnext = SpElemProperties.SpP.FirstSTPIdx(SpP)+TimeSection_tgt;
-    STPpres = SpElemProperties.SpP.FirstSTPIdx(SpP)+TimeSection_tgt-1;
-    Map_STPnext_SpP(STPnext,SpP)    = true;
-    Map_SpP_STPpres(SpP,STPpres)    = true;
+for nth_SpP  = SpFI_TaskInfo.ElemIdx.SpP
+    STPnext = SpElemProperties.SpP.FirstSTPIdx(nth_SpP)+TimeSection_tgt;
+    STPpres = SpElemProperties.SpP.FirstSTPIdx(nth_SpP)+TimeSection_tgt-1;
+    Map_STPnext_SpP(STPnext,nth_SpP)    = true;
+    Map_SpP_STPpres(nth_SpP,STPpres)    = true;
     STP_to_Conserve(STPnext)        = false;
 end
-for nthSpS  = 1:size(SpS_lst_SpFI,1)
-    SpS     = SpS_lst_SpFI(nthSpS);
-    STPnext = SpElemProperties.SpS.FirstSTPIdx(SpS)+TimeSection_tgt;
-    STPpres = SpElemProperties.SpS.FirstSTPIdx(SpS)+TimeSection_tgt-1;
-    Map_STPnext_SpS(STPnext,SpS)    = true;
-    Map_SpS_STPpres(SpS,STPpres)    = true;
+for nth_SpS  = SpFI_TaskInfo.ElemIdx.SpS
+    STPnext = SpElemProperties.SpS.FirstSTPIdx(nth_SpS)+TimeSection_tgt;
+    STPpres = SpElemProperties.SpS.FirstSTPIdx(nth_SpS)+TimeSection_tgt-1;
+    Map_STPnext_SpS(STPnext,nth_SpS)    = true;
+    Map_SpS_STPpres(nth_SpS,STPpres)    = true;
     STP_to_Conserve(STPnext)        = false;
-    row_sC_e    = find(sC(:,SpS));
-    for nthSpP  = 1:size(row_sC_e,1)%faces incident to e
-        SpP     = row_sC_e(nthSpP);
-        STPpres = SpElemProperties.SpP.FirstSTPIdx(SpP)+TimeSection_tgt-1;
-        Map_SpPinctoSpS_STPpres(SpP,STPpres)    = true;
+    for nth_SpP  = find(sC(:,nth_SpS))
+        STPpres = SpElemProperties.SpP.FirstSTPIdx(nth_SpP)+TimeSection_tgt-1;
+        Map_SpPinctoSpS_STPpres(nth_SpP,STPpres)    = true;
     end
 end
 
 z       = spdiags(Kappa_over_Z.^(-1),0,Num_of_Elem.STP,Num_of_Elem.STP);
 zinv    = spdiags(Kappa_over_Z      ,0,Num_of_Elem.STP,Num_of_Elem.STP);
 
-ST_SourceIdx=0;
+Sum=0;
 for nth_source = 1:size(Source,2) 
-    ST_SourceIdx=ST_SourceIdx+Source(nth_source).UpdNum;
+    Sum=Sum+Source(nth_source).UpdNum;
 end
-SourcePattern = sparse(Num_of_Elem.SpS,ST_SourceIdx);
+SourcePattern = sparse(Num_of_Elem.SpS,Sum);
 ST_SourceIdx=0;
 for nth_source = 1:size(Source,2)
     for CurrentTimeSec = 1:Source(nth_source).UpdNum 
         ST_SourceIdx=ST_SourceIdx+1;
-        if Source(nth_source).SpFI_RegionIdx==Sp_FI_Region_tgt && CurrentTimeSec == TimeSection_tgt
+        if SpElemProperties.SpS.SpFI_TaskIdx(Source(nth_source).DualFace_tgt)==Sp_FI_Region_tgt ...
+                && CurrentTimeSec == TimeSection_tgt
             SourcePattern(Source(nth_source).DualFace_tgt,ST_SourceIdx)=1;
         end
     end
 end
-
+SpElemProperties.SpS.SpFI_TaskIdx(Source(nth_source).DualFace_tgt)
 % the minus for the dual grid is because [z] includes the sign-flipping
 %% Are these signes definitely right? check.
 TMM_Onestep     = ...
