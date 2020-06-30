@@ -1,8 +1,8 @@
 function [Task,TaskDependanceGraph,Map_SpElem_to_FirstGlobTask] ...
-    = GenerateSp_FI_Tasks_4D_ST(sC,sD,SpElemPropreties,Task,TaskDependanceGraph,Map_SpElem_to_FirstGlobTask)
+    = GenerateSp_FI_Tasks_4D_ST(sC,sD,SpElemProperties,Task,TaskDependanceGraph,Map_SpElem_to_FirstGlobTask)
 sDPattern_PartiallyOmitted=logical(sD);
 
-for SpP = find(SpElemPropreties.SpP.Belong_to_ST_FI)
+for SpP = find(SpElemProperties.SpP.Belong_to_ST_FI)
     sDPattern_PartiallyOmitted(:,SpP)=false;
 end
 Adj_SpP_PartiallyOmitted = graph(sDPattern_PartiallyOmitted.' * sDPattern_PartiallyOmitted,'omitselfloops');
