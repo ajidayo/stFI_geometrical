@@ -7,8 +7,8 @@ end
 function [kappa,FaceAreaPrim] = ComputeKappa_for_SpFI_SpPs(kappa,cdt,sG,sC,sD,NodePos,SpElemProperties)
 for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI)
     FaceAreaPrim = zeros(Num_of_Elem.SpP);
-    Area_PrimSTP = SpFaceArea(SpPIdx,sG,sC,NodePos);
-    Area_DualSTP = SpEdgeLength(SpPIdx,sD.',NodePos)*cdt/SpElemProperties.SpP.UpdNum;
+    Area_PrimSTP = SpFaceArea(SpPIdx,sG,sC,NodePos.Prim);
+    Area_DualSTP = SpEdgeLength(SpPIdx,sD.',NodePos.Dual)*cdt/SpElemProperties.SpP.UpdNum;
     for STPIdx = SpElemProperties.SpS.FirstSTPIdx(SpPIdx):...
             SpElemProperties.SpS.FirstSTPIdx(SpPIdx)+SpElemProperties.SpS.UpdNum
         kappa(STPIdx) = Area_DualSTP/Area_PrimSTP;
@@ -19,8 +19,8 @@ end
 function [kappa,FaceAreaDual] = ComputeKappa_for_SpFI_SpSs(kappa,cdt,sG,sC,sD,NodePos,SpElemProperties)
 for SpSIdx = find(SpElemProperties.SpS.Belong_to_ST_FI)
     FaceAreaDual = zeros(Num_of_Elem.SpS);
-    Area_PrimSTP = SpEdgeLength(SpSIdx,sG,NodePos)*cdt/SpElemProperties.SpS.UpdNum;
-    Area_DualSTP = SpFaceArea(SpSIdx,sD.',sC.',NodePos);
+    Area_PrimSTP = SpEdgeLength(SpSIdx,sG,NodePos.Prim)*cdt/SpElemProperties.SpS.UpdNum;
+    Area_DualSTP = SpFaceArea(SpSIdx,sD.',sC.',NodePos.Dual);
     for STPIdx = SpElemProperties.SpS.FirstSTPIdx(SpSIdx):...
             SpElemProperties.SpS.FirstSTPIdx(SpSIdx)+SpElemProperties.SpS.UpdNum
         kappa(STPIdx) = Area_DualSTP/Area_PrimSTP;
