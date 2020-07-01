@@ -1,4 +1,4 @@
-function [D0,D1,D2,D3] = ComputeST_Mesh(sG,sC,sD,Num_of_Elem)
+function [D0,D1,D2,D3] = ComputeST_Mesh(sG,sC,sD,SpElemProperties,Num_of_Elem)
 Num_of_Elem.STV     = sum(SpElemProperties.SpV.UpdNum);
 Num_of_Elem.STOmega = sum(SpElemProperties.SpV.UpdNum) + 2*Num_of_Elem.SpV +sum(SpElemProperties.SpP.UpdNum);
 Num_of_Elem.STS     = sum(SpElemProperties.SpS.UpdNum) + 2*Num_of_Elem.SpS + sum(SpElemProperties.SpN.UpdNum) + Num_of_Elem.SpN;
@@ -7,6 +7,10 @@ D0 = sparse(Num_of_Elem.STS     ,Num_of_Elem.STN    );
 D1 = sparse(Num_of_Elem.STP     ,Num_of_Elem.STS    );
 D2 = sparse(Num_of_Elem.STOmega ,Num_of_Elem.STP    );
 D3 = sparse(Num_of_Elem.STV     ,Num_of_Elem.STOmega);
+
+if size(find(SpElemProperties.SpS.Belong_to_ST_FI),1)==0
+    return
+end
 
 %% D0
 for SpSIdx = find(SpElemProperties.SpS.Belong_to_ST_FI)

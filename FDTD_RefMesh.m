@@ -46,10 +46,10 @@ sG = sparse(Num_of_Elem.SpS,Num_of_Elem.SpN);
 for ZIdx = 1:ZSize+1
     for YIdx = 1:YSize+1
         for XIdx = 1:XSize
-            SIdx = XIdx   + (YIdx-1)*XEdgePerXRow + (ZIdx-1)*XEdgePerXYPlane;
-            IncNIdx = XIdx   + (YIdx-1)*NodePerXRow + (ZIdx-1)*NodePerXYPlane;
+            SIdx    = XIdx   + (YIdx-1)*XEdgePerXRow + (ZIdx-1)*XEdgePerXYPlane;
+            IncNIdx = XIdx   + (YIdx-1)*NodePerXRow  + (ZIdx-1)*NodePerXYPlane;
             sG(SIdx,IncNIdx) = -1;
-            IncNIdx = XIdx+1 + (YIdx-1)*NodePerXRow + (ZIdx-1)*NodePerXYPlane;
+            IncNIdx = XIdx+1 + (YIdx-1)*NodePerXRow  + (ZIdx-1)*NodePerXYPlane;
             sG(SIdx,IncNIdx) =  1;
         end
     end
@@ -57,10 +57,10 @@ end
 for ZIdx = 1:ZSize+1
     for YIdx = 1:YSize
         for XIdx = 1:XSize+1
-            SIdx = XIdx   + (YIdx-1)*YEdgePerXRow + (ZIdx-1)*YEdgePerXYPlane+XEdgeNum;
-            IncNIdx = XIdx   + (YIdx-1)*NodePerXRow + (ZIdx-1)*NodePerXYPlane;
+            SIdx    = XIdx   + (YIdx-1)*YEdgePerXRow + (ZIdx-1)*YEdgePerXYPlane+XEdgeNum;
+            IncNIdx = XIdx   + (YIdx-1)*NodePerXRow  + (ZIdx-1)*NodePerXYPlane;
             sG(SIdx,IncNIdx) = -1;
-            IncNIdx = XIdx+1 + (YIdx  )*NodePerXRow + (ZIdx-1)*NodePerXYPlane;
+            IncNIdx = XIdx   + (YIdx  )*NodePerXRow  + (ZIdx-1)*NodePerXYPlane;
             sG(SIdx,IncNIdx) =  1;
         end
     end
@@ -68,10 +68,10 @@ end
 for ZIdx = 1:ZSize
     for YIdx = 1:YSize+1
         for XIdx = 1:XSize+1
-            SIdx = XIdx   + (YIdx-1)*ZEdgePerXRow + (ZIdx-1)*ZEdgePerXYPlane+XEdgeNum+YEdgeNum;
-            IncNIdx = XIdx   + (YIdx-1)*NodePerXRow + (ZIdx-1)*NodePerXYPlane;
+            SIdx    = XIdx   + (YIdx-1)*ZEdgePerXRow + (ZIdx-1)*ZEdgePerXYPlane+XEdgeNum+YEdgeNum;
+            IncNIdx = XIdx   + (YIdx-1)*NodePerXRow  + (ZIdx-1)*NodePerXYPlane;
             sG(SIdx,IncNIdx) = -1;
-            IncNIdx = XIdx+1 + (YIdx-1)*NodePerXRow + (ZIdx  )*NodePerXYPlane;
+            IncNIdx = XIdx   + (YIdx-1)*NodePerXRow  + (ZIdx  )*NodePerXYPlane;
             sG(SIdx,IncNIdx) =  1;
         end
     end
@@ -83,7 +83,8 @@ function sC = FDTD_sC(MeshMeasurements,Num_of_Elem)
 XSize = MeshMeasurements.XCoord/MeshMeasurements.dx;
 YSize = MeshMeasurements.YCoord/MeshMeasurements.dy;
 ZSize = MeshMeasurements.ZCoord/MeshMeasurements.dz;
-YZFacePerXRow       = XSize+1;
+
+YZFacePerXRow       = (XSize+1);
 YZFacePerXYPlane    = (XSize+1)*YSize;
 YZFaceNum           = (XSize+1)*YSize*ZSize;
 ZXFacePerXRow       = XSize;
@@ -96,26 +97,26 @@ XYFacePerXYPlane    = XSize*YSize;
 XEdgePerXRow        = XSize;
 XEdgePerXYPlane     = XSize*(YSize+1);
 XEdgeNum            = XSize*(YSize+1)*(ZSize+1);
-YEdgePerXRow        = XSize+1;
+YEdgePerXRow        = (XSize+1);
 YEdgePerXYPlane     = (XSize+1)*YSize;
 YEdgeNum            = (XSize+1)*YSize*(ZSize+1);
-ZEdgePerXRow        = XSize+1;
+ZEdgePerXRow        = (XSize+1);
 ZEdgePerXYPlane     = (XSize+1)*(YSize+1);
-%ZEdgeNum            = (XSize+1)*(YSize+1)*ZSize;
+%ZEdgeNum           = (XSize+1)*(YSize+1)*ZSize;
 
 sC = sparse(Num_of_Elem.SpP,Num_of_Elem.SpS);
 
 for ZIdx = 1:ZSize
     for YIdx = 1:YSize
         for XIdx = 1:XSize+1
-            PIdx = XIdx   + (YIdx-1)*YZFacePerXRow + (ZIdx-1)*YZFacePerXYPlane;
-            IncSIdx = XIdx   + (YIdx-1)*YEdgePerXRow + (ZIdx-1)*YEdgePerXYPlane+XEdgeNum;
+            PIdx    = XIdx   + (YIdx-1)*YZFacePerXRow + (ZIdx-1)*YZFacePerXYPlane;
+            IncSIdx = XIdx   + (YIdx-1)*YEdgePerXRow  + (ZIdx-1)*YEdgePerXYPlane+XEdgeNum;
             sC(PIdx,IncSIdx) = -1;
-            IncSIdx = XIdx   + (YIdx-1)*YEdgePerXRow + (ZIdx  )*YEdgePerXYPlane+XEdgeNum;  
+            IncSIdx = XIdx   + (YIdx-1)*YEdgePerXRow  + (ZIdx  )*YEdgePerXYPlane+XEdgeNum;  
             sC(PIdx,IncSIdx) =  1;
-            IncSIdx = XIdx   + (YIdx-1)*ZEdgePerXRow + (ZIdx-1)*ZEdgePerXYPlane+XEdgeNum+YEdgeNum;
+            IncSIdx = XIdx   + (YIdx-1)*ZEdgePerXRow  + (ZIdx-1)*ZEdgePerXYPlane+XEdgeNum+YEdgeNum;
             sC(PIdx,IncSIdx) = -1;
-            IncSIdx = XIdx   + (YIdx  )*ZEdgePerXRow + (ZIdx-1)*ZEdgePerXYPlane+XEdgeNum+YEdgeNum;
+            IncSIdx = XIdx   + (YIdx  )*ZEdgePerXRow  + (ZIdx-1)*ZEdgePerXYPlane+XEdgeNum+YEdgeNum;
             sC(PIdx,IncSIdx) =  1;
         end
     end
@@ -123,15 +124,15 @@ end
 for ZIdx = 1:ZSize
     for YIdx = 1:YSize+1
         for XIdx = 1:XSize
-            PIdx = XIdx   + (YIdx-1)*ZXFacePerXRow + (ZIdx-1)*ZXFacePerXYPlane ...
+            PIdx    = XIdx   + (YIdx-1)*ZXFacePerXRow + (ZIdx-1)*ZXFacePerXYPlane ...
                 +YZFaceNum;
-            IncSIdx = XIdx   + (YIdx-1)*XEdgePerXRow + (ZIdx-1)*XEdgePerXYPlane;
+            IncSIdx = XIdx   + (YIdx-1)*XEdgePerXRow  + (ZIdx-1)*XEdgePerXYPlane;
             sC(PIdx,IncSIdx) = -1;
-            IncSIdx = XIdx   + (YIdx-1)*XEdgePerXRow + (ZIdx  )*XEdgePerXYPlane;
+            IncSIdx = XIdx   + (YIdx-1)*XEdgePerXRow  + (ZIdx  )*XEdgePerXYPlane;
             sC(PIdx,IncSIdx) =  1;
-            IncSIdx = XIdx   + (YIdx-1)*ZEdgePerXRow + (ZIdx-1)*ZEdgePerXYPlane+XEdgeNum+YEdgeNum;
+            IncSIdx = XIdx   + (YIdx-1)*ZEdgePerXRow  + (ZIdx-1)*ZEdgePerXYPlane+XEdgeNum+YEdgeNum;
             sC(PIdx,IncSIdx) = -1;
-            IncSIdx = XIdx+1 + (YIdx-1)*ZEdgePerXRow + (ZIdx-1)*ZEdgePerXYPlane+XEdgeNum+YEdgeNum;
+            IncSIdx = XIdx+1 + (YIdx-1)*ZEdgePerXRow  + (ZIdx-1)*ZEdgePerXYPlane+XEdgeNum+YEdgeNum;
             sC(PIdx,IncSIdx) =  1;
         end
     end
@@ -139,15 +140,15 @@ end
 for ZIdx = 1:ZSize+1
     for YIdx = 1:YSize
         for XIdx = 1:XSize
-            PIdx = XIdx   + (YIdx-1)*XYFacePerXRow + (ZIdx-1)*XYFacePerXYPlane ...
+            PIdx    = XIdx   + (YIdx-1)*XYFacePerXRow + (ZIdx-1)*XYFacePerXYPlane ...
                 +YZFaceNum+ZXFaceNum;
-            IncSIdx = XIdx   + (YIdx-1)*XEdgePerXRow + (ZIdx-1)*XEdgePerXYPlane;
+            IncSIdx = XIdx   + (YIdx-1)*XEdgePerXRow  + (ZIdx-1)*XEdgePerXYPlane;
             sC(PIdx,IncSIdx) = -1;
-            IncSIdx = XIdx   + (YIdx  )*XEdgePerXRow + (ZIdx-1)*XEdgePerXYPlane;
+            IncSIdx = XIdx   + (YIdx  )*XEdgePerXRow  + (ZIdx-1)*XEdgePerXYPlane;
             sC(PIdx,IncSIdx) =  1;
-            IncSIdx = XIdx   + (YIdx-1)*YEdgePerXRow + (ZIdx-1)*YEdgePerXYPlane+XEdgeNum;  
+            IncSIdx = XIdx   + (YIdx-1)*YEdgePerXRow  + (ZIdx-1)*YEdgePerXYPlane+XEdgeNum;  
             sC(PIdx,IncSIdx) = -1;
-            IncSIdx = XIdx+1 + (YIdx-1)*YEdgePerXRow + (ZIdx-1)*YEdgePerXYPlane+XEdgeNum;
+            IncSIdx = XIdx+1 + (YIdx-1)*YEdgePerXRow  + (ZIdx-1)*YEdgePerXYPlane+XEdgeNum;
             sC(PIdx,IncSIdx) =  1;
         end
     end

@@ -31,12 +31,13 @@ Num_of_STP = CurrentSTPIdx -1;
 % Usage Guide: SpElemPropreties.SpP.Belong_to_ST_FI(SpPIdx)
 % First check if SpPs are on dt-Interfaces. Interface SpPs belongs to ST_FI-region.
 % SpPs adjacent to interface-SpPs belongs to ST_FI-region.
+SpElemProperties.SpP.Belong_to_ST_FI = logical(sparse(Num_of_Elem.SpP,1));
 AdjM_SpP_via_SpV = sD.'*sD;
 for nth_SpP = 1:Num_of_Elem.SpP
     Sum = 0;
     IncSpV_List = find(sD(:,nth_SpP));
-    for IncSpV = IncSpV_List
-        Sum = Sum + SpElemProperties.SpV.UpdNum(IncSpV);  
+    for IncSpV = IncSpV_List.'
+        Sum = Sum + SpElemProperties.SpV.UpdNum(IncSpV);
     end
     if Sum == size(IncSpV_List,1)*SpElemProperties.SpV.UpdNum(IncSpV_List(1))
         SpElemProperties.SpP.Belong_to_ST_FI(nth_SpP) = false;
@@ -45,6 +46,7 @@ for nth_SpP = 1:Num_of_Elem.SpP
         SpElemProperties.SpP.Belong_to_ST_FI(find(AdjM_SpP_via_SpV(SpP,:))) = true;
     end
 end
+SpElemProperties.SpS.Belong_to_ST_FI = logical(sparse(Num_of_Elem.SpS,1));
 % SpSs incident to ST_FI-SpPs belongs to ST_FI-region.
 for nth_SpP = find(SpElemProperties.SpP.Belong_to_ST_FI)
     for IncSpS = find(sC(nth_SpP,:))
@@ -53,7 +55,4 @@ for nth_SpP = find(SpElemProperties.SpP.Belong_to_ST_FI)
 end
 % Other SpPs, and SpSs belongs to Sp_FI-region.
 % ST_FI-SpSs which are incident to Sp_FI SpPs have 'SpFI_BoundarySpS' attribute (in this neccesary??) 
-
-%% other attributes
-% SpSs on the outer boundary of the calculation region has 'PEC' attribute.
 end

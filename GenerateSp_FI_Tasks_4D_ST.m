@@ -1,4 +1,4 @@
-function [Task,TaskDepGraph,Map_SpElem_to_FirstGlobTask] ...
+function [Task,TaskDepGraph,SpElemProperties,Map_SpElem_to_FirstGlobTask] ...
     = GenerateSp_FI_Tasks_4D_ST(sC,sD,SpElemProperties,Num_of_Elem,Task,TaskDepGraph,Map_SpElem_to_FirstGlobTask)
 sDPattern_PartiallyOmitted=logical(sD);
 
@@ -11,23 +11,23 @@ Adj_SpP_PartiallyOmitted = graph(sDPattern_PartiallyOmitted.' * sDPattern_Partia
 [SG_bin_SpP,SG_ElemNum_SpP] = conncomp(Adj_SpP_PartiallyOmitted);
 clearvars Adj_SpP_PartiallyOmitted
 
-[SpFI_TaskInfo] = EliminateST_FI_SpPs(SG_bin_SpP,SG_ElemNum_SpP,SpElemProperties,Num_of_Elem);
+ [SpFI_TaskInfo,SpElemProperties] ...
+     = EliminateST_FI_SpPs(SG_bin_SpP,SG_ElemNum_SpP,SpElemProperties,Num_of_Elem);
 clearvars SG_bin_SpP SG_ElemNum_SpP
-% for SpFI_TaskIdx =1:size(SpFI_TaskInfo,2)
-%     SpFI_TaskInfo(SpFI_TaskIdx).ElemIdx.SpS = zeros(Num_of_Elem.SpS,1);
-%     SpFI_TaskInfo(SpFI_TaskIdx).ElemNum.SpS = zeros(size(SpFI_TaskInfo.ElemNum.SpP,2),1);
-% end
+for SpFI_TaskIdx =1:size(SpFI_TaskInfo,2)
+    SpFI_TaskInfo(SpFI_TaskIdx).ElemIdx.SpS = 0;
+    SpFI_TaskInfo(SpFI_TaskIdx).ElemNum.SpS = 0;
+end
 for SpS_tgt=1:Num_of_Elem.SpS
-    switch SpElemProperties.SpS.Belong_to_ST_FI(SpS_tgt) || SpElemProperties.SpS.PEC(SpS_tgt)
-        case true
-            continue;
-        case false
-            SpP_fetch = find(sC(:,SpS_tgt),1);
-            SpFI_TaskIdx = SpElemProperties.SpP.SpFI_TaskIdx(SpP_fetch);
-            Num_of_IncludedSpS = SpFI_TaskInfo(SpFI_TaskIdx).ElemNum.SpS+1;
-            SpFI_TaskInfo(SpFI_TaskIdx).ElemNum.SpS = Num_of_IncludedSpS;
-            SpFI_TaskInfo(SpFI_TaskIdx).ElemIdx.SpS(Num_of_IncludedSpS) = SpS_tgt;
-            SpElemProperties.SpS.SpFI_TaskIdx(SpS_tgt)=SpFI_TaskIdx;
+    if SpElemProperties.SpS.Belong_to_ST_FI(SpS_tgt) || SpElemProperties.SpS.PEC(SpS_tgt)
+        continue;
+    else
+        SpP_fetch = find(sC(:,SpS_tgt),1);
+        SpFI_TaskIdx = SpElemProperties.SpP.SpFI_TaskIdx(SpP_fetch);
+        Num_of_IncludedSpS = SpFI_TaskInfo(SpFI_TaskIdx).ElemNum.SpS+1;
+        SpFI_TaskInfo(SpFI_TaskIdx).ElemNum.SpS = Num_of_IncludedSpS;
+        SpFI_TaskInfo(SpFI_TaskIdx).ElemIdx.SpS(Num_of_IncludedSpS) = SpS_tgt;
+        SpElemProperties.SpS.SpFI_TaskIdx(SpS_tgt)=SpFI_TaskIdx;
     end
 end
 switch size(Task,2)
@@ -44,7 +44,10 @@ for SpFI_TaskIdx=1:size(SpFI_TaskInfo,2)
          if CurrentTimeSec == 1
              Map_SpElem_to_FirstGlobTask.SpFI_RegionIdx(SpFI_TaskIdx) = GlobalTaskIdx;
          end
-         Task(GlobalTaskIdx) = SpFI_TaskInfo(SpFI_TaskIdx);
+         names = fieldnames(SpFI_TaskInfo(SpFI_TaskIdx));
+         for i = 1:size(names,1) 
+             Task(GlobalTaskIdx).(names{i}) = SpFI_TaskInfo(SpFI_TaskIdx).(names{i});
+         end
          Task(GlobalTaskIdx).Type = "Sp_FI";
          Task(GlobalTaskIdx).TimeSection_tgt = CurrentTimeSec;
      end
@@ -52,13 +55,15 @@ end
 
 EdgeIdx =0;
 for SpFI_TaskIdx = size(SpFI_TaskInfo,2)
-    for CurrentTimeSec = 2:SpFI_TaskIdx.UpdNum(SpFI_TaskIdx)
+    for CurrentTimeSec = 2:SpFI_TaskInfo(SpFI_TaskIdx).UpdNum
         EdgeIdx = EdgeIdx+1;
         StaTask(EdgeIdx) = Map_SpElem_to_FirstGlobTask.SpFI_RegionIdx(SpFI_TaskIdx)-1+CurrentTimeSec-1;
         TgtTask(EdgeIdx) = Map_SpElem_to_FirstGlobTask.SpFI_RegionIdx(SpFI_TaskIdx)-1+CurrentTimeSec;
     end
 end
-TaskDepGraph = addedge(TaskDepGraph,StaTask,TgtTask);
+if exist('StaTask','var') == 1
+    TaskDepGraph = addedge(TaskDepGraph,StaTask,TgtTask);
+end
 clearvars StaTask TgtTask
 
 end

@@ -1,11 +1,11 @@
 function [kappa,FaceArea] = ComputeKappa_4D_ST(cdt,sG,sC,sD,D0,D1,D2,D3,NodePos,SpElemProperties,Num_of_Elem)
-kappa = zeros(Num_of_Elem.STP);
-[kappa,FaceArea.Dual]   = ComputeKappa_for_SpFI_SpSs(kappa,cdt,sG,sC,sD,NodePos,SpElemProperties);
-[kappa,FaceArea.Prim]   = ComputeKappa_for_SpFI_SpPs(kappa,cdt,sG,sC,sD,NodePos,SpElemProperties);
+kappa = zeros(Num_of_Elem.STP,1);
+[kappa,FaceArea.Dual]   = ComputeKappa_for_SpFI_SpSs(kappa,cdt,sG,sC,sD,NodePos,SpElemProperties,Num_of_Elem);
+[kappa,FaceArea.Prim]   = ComputeKappa_for_SpFI_SpPs(kappa,cdt,sG,sC,sD,NodePos,SpElemProperties,Num_of_Elem);
 end
 %%
-function [kappa,FaceAreaPrim] = ComputeKappa_for_SpFI_SpPs(kappa,cdt,sG,sC,sD,NodePos,SpElemProperties)
-for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI)
+function [kappa,FaceAreaPrim] = ComputeKappa_for_SpFI_SpPs(kappa,cdt,sG,sC,sD,NodePos,SpElemProperties,Num_of_Elem)
+for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI==false)
     FaceAreaPrim = zeros(Num_of_Elem.SpP);
     Area_PrimSTP = SpFaceArea(SpPIdx,sG,sC,NodePos.Prim);
     Area_DualSTP = SpEdgeLength(SpPIdx,sD.',NodePos.Dual)*cdt/SpElemProperties.SpP.UpdNum;
@@ -16,11 +16,13 @@ for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI)
     FaceAreaPrim(SpPIdx) = Area_PrimSTP;
 end
 end
-function [kappa,FaceAreaDual] = ComputeKappa_for_SpFI_SpSs(kappa,cdt,sG,sC,sD,NodePos,SpElemProperties)
-for SpSIdx = find(SpElemProperties.SpS.Belong_to_ST_FI)
-    FaceAreaDual = zeros(Num_of_Elem.SpS);
+function [kappa,FaceAreaDual] = ComputeKappa_for_SpFI_SpSs(kappa,cdt,sG,sC,sD,NodePos,SpElemProperties,Num_of_Elem)
+for SpSIdx = find(SpElemProperties.SpS.Belong_to_ST_FI==false)
+    FaceAreaDual = zeros(Num_of_Elem.SpS,1);
+    SpSIdx
     Area_PrimSTP = SpEdgeLength(SpSIdx,sG,NodePos.Prim)*cdt/SpElemProperties.SpS.UpdNum;
     Area_DualSTP = SpFaceArea(SpSIdx,sD.',sC.',NodePos.Dual);
+    disp("hoge")
     for STPIdx = SpElemProperties.SpS.FirstSTPIdx(SpSIdx):...
             SpElemProperties.SpS.FirstSTPIdx(SpSIdx)+SpElemProperties.SpS.UpdNum
         kappa(STPIdx) = Area_DualSTP/Area_PrimSTP;
@@ -35,8 +37,8 @@ Nodes = find(logical(sC(SpPIdx,:))*logical(sG));
 Area_Face = ThreeD_SpP_Area(Nodes,sG,NodePos);
 end
 function Length_Edge = SpEdgeLength(SpSIdx,sG,NodePos)
-Endpoints = find(sG(SpSIdx));
-Length_Edge = norm(NodePos(Endpoints(1)).Vec - NodePos(Endpoints(1)).Vec);
+Endpoints = find(sG(SpSIdx,:));
+Length_Edge = norm(NodePos(Endpoints(2)).Vec - NodePos(Endpoints(1)).Vec);
 end
 function Area_3DFace = ThreeD_SpP_Area(Nodes,sG,NodePos)
 StartNode = Nodes(1);
