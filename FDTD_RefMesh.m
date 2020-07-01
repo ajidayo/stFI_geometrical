@@ -110,13 +110,17 @@ for ZIdx = 1:ZSize
     for YIdx = 1:YSize
         for XIdx = 1:XSize+1
             PIdx    = XIdx   + (YIdx-1)*YZFacePerXRow + (ZIdx-1)*YZFacePerXYPlane;
-            IncSIdx = XIdx   + (YIdx-1)*YEdgePerXRow  + (ZIdx-1)*YEdgePerXYPlane+XEdgeNum;
+            IncSIdx = XIdx   + (YIdx-1)*YEdgePerXRow  + (ZIdx-1)*YEdgePerXYPlane...
+                +XEdgeNum;
             sC(PIdx,IncSIdx) = -1;
-            IncSIdx = XIdx   + (YIdx-1)*YEdgePerXRow  + (ZIdx  )*YEdgePerXYPlane+XEdgeNum;  
+            IncSIdx = XIdx   + (YIdx-1)*YEdgePerXRow  + (ZIdx  )*YEdgePerXYPlane...
+                +XEdgeNum;  
             sC(PIdx,IncSIdx) =  1;
-            IncSIdx = XIdx   + (YIdx-1)*ZEdgePerXRow  + (ZIdx-1)*ZEdgePerXYPlane+XEdgeNum+YEdgeNum;
+            IncSIdx = XIdx   + (YIdx-1)*ZEdgePerXRow  + (ZIdx-1)*ZEdgePerXYPlane...
+                +XEdgeNum+YEdgeNum;
             sC(PIdx,IncSIdx) = -1;
-            IncSIdx = XIdx   + (YIdx  )*ZEdgePerXRow  + (ZIdx-1)*ZEdgePerXYPlane+XEdgeNum+YEdgeNum;
+            IncSIdx = XIdx   + (YIdx  )*ZEdgePerXRow  + (ZIdx-1)*ZEdgePerXYPlane...
+                +XEdgeNum+YEdgeNum;
             sC(PIdx,IncSIdx) =  1;
         end
     end

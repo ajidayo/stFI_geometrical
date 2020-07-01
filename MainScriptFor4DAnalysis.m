@@ -30,14 +30,17 @@ TaskOrder                   = SortTasks(TaskDepGraph,Map_SpElem_to_FirstGlobTask
 clearvars TaskDepGraph;
 disp('point3')
 [D0,D1,D2,D3]               = ComputeST_Mesh(sG,sC,sD,SpElemProperties,Num_of_Elem);
+disp('point4')
 [kappa,FaceArea]            = ComputeKappa_4D_ST(cdt,sG,sC,sD,D0,D1,D2,D3,NodePos,SpElemProperties,Num_of_Elem);
 Z                           = ComputeImpedance_for_EachSTPs(RefImpedance_SpV,sC,sD,SpElemProperties,Num_of_Elem);
 Kappa_over_Z                = kappa/Z;
+disp('point5')
 TMM                         = ConstructTimeMarchingMatrix_4D_ST(D1,D2,sC,Kappa_over_Z,Source,SpElemProperties,Task,TaskOrder,Num_of_Elem);
 [TMM_Fields, TMM_Sources]   = SplitTMM_into_FieldsAndSources(TMM,Source);
 TMM_Fields                  = ExcludePEC_ST_Planes(TMM_Fields, SpElemProperties);
 DoFs_FacesThenEdges         = InitializeFields;
 Num_of_Steps                = 100;
 Time                        = 0;
+disp('point6')
 DoFs_FacesThenEdges         = TimeMarch(Num_of_Steps,Time,cdt,TMM_Fields,TMM_Sources,DoFs_FacesThenEdges,Source);
 %PlotMagneticFlux
