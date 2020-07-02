@@ -19,8 +19,10 @@ sG = FDTD_sG(MeshMeasurements,Num_of_Elem);
 sC = FDTD_sC(MeshMeasurements,Num_of_Elem);
 sD = FDTD_sD(MeshMeasurements,Num_of_Elem);
 NodePos = FDTD_NodePos(MeshMeasurements);
-SpElemProperties.SpV.UpdNum = LocalUpdateNum*ones(Num_of_Elem.SpV,1);
-SpElemProperties.SpS.PEC    = FDTD_SpS_PEC(MeshMeasurements,Num_of_Elem);
+SpElemProperties.SpV.UpdNum     = LocalUpdateNum*ones(Num_of_Elem.SpV,1);
+SpElemProperties.SpS.PEC        = FDTD_SpS_PEC(MeshMeasurements,Num_of_Elem);
+SpElemProperties.SpP.ElecWall   = FDTD_SpP_ElecWall(MeshMeasurements,Num_of_Elem);
+
 end
 
 function sG = FDTD_sG(MeshMeasurements,Num_of_Elem)
@@ -259,49 +261,92 @@ SpElemProperties_SpS_PEC = zeros(Num_of_Elem.SpS,1);
 for ZIdx = 1:ZSize+1
     for YIdx = [1 YSize+1]
         for XIdx = 1:XSize
-            PIdx = XIdx   + (YIdx-1)*XEdgePerXRow + (ZIdx-1)*XEdgePerXYPlane;
-            SpElemProperties_SpS_PEC(PIdx) = true;
+            SIdx = XIdx   + (YIdx-1)*XEdgePerXRow + (ZIdx-1)*XEdgePerXYPlane;
+            SpElemProperties_SpS_PEC(SIdx) = true;
         end
     end
 end
 for ZIdx = 1:ZSize
     for YIdx = [1 YSize+1]
         for XIdx = 1:XSize+1
-            PIdx = XIdx   + (YIdx-1)*YEdgePerXRow + (ZIdx-1)*YEdgePerXYPlane +XEdgeNum;
-            SpElemProperties_SpS_PEC(PIdx) = true;
+            SIdx = XIdx   + (YIdx-1)*YEdgePerXRow + (ZIdx-1)*YEdgePerXYPlane +XEdgeNum;
+            SpElemProperties_SpS_PEC(SIdx) = true;
         end
     end
 end
 for ZIdx = 1:ZSize+1
     for YIdx = 1:YSize
         for XIdx = [1 XSize+1]
-            PIdx = XIdx   + (YIdx-1)*YEdgePerXRow + (ZIdx-1)*YEdgePerXYPlane +XEdgeNum;
-            SpElemProperties_SpS_PEC(PIdx) = true;
+            SIdx = XIdx   + (YIdx-1)*YEdgePerXRow + (ZIdx-1)*YEdgePerXYPlane +XEdgeNum;
+            SpElemProperties_SpS_PEC(SIdx) = true;
         end
     end
 end
 for ZIdx = 1:ZSize
     for YIdx = 1:YSize+1
         for XIdx = [1 XSize+1]
-            PIdx = XIdx   + (YIdx-1)*ZEdgePerXRow + (ZIdx-1)*ZEdgePerXYPlane +XEdgeNum+YEdgeNum;
-            SpElemProperties_SpS_PEC(PIdx) = true;
+            SIdx = XIdx   + (YIdx-1)*ZEdgePerXRow + (ZIdx-1)*ZEdgePerXYPlane +XEdgeNum+YEdgeNum;
+            SpElemProperties_SpS_PEC(SIdx) = true;
         end
     end
 end
 for ZIdx = [1 ZSize+1]
     for YIdx = 1:YSize+1
         for XIdx = 1:XSize
-            PIdx = XIdx   + (YIdx-1)*XEdgePerXRow + (ZIdx-1)*XEdgePerXYPlane;
-            SpElemProperties_SpS_PEC(PIdx) = true;
+            SIdx = XIdx   + (YIdx-1)*XEdgePerXRow + (ZIdx-1)*XEdgePerXYPlane;
+            SpElemProperties_SpS_PEC(SIdx) = true;
         end
     end
 end
 for ZIdx = [1 ZSize+1]
     for YIdx = 1:YSize
         for XIdx = 1:XSize+1
-            PIdx = XIdx   + (YIdx-1)*YEdgePerXRow + (ZIdx-1)*YEdgePerXYPlane +XEdgeNum;
-            SpElemProperties_SpS_PEC(PIdx) = true;
+            SIdx = XIdx   + (YIdx-1)*YEdgePerXRow + (ZIdx-1)*YEdgePerXYPlane +XEdgeNum;
+            SpElemProperties_SpS_PEC(SIdx) = true;
         end
     end
 end
+end
+
+function SpElemProperties_SpP_ElecWall = FDTD_SpP_ElecWall(MeshMeasurements,Num_of_Elem)
+XSize = MeshMeasurements.XCoord/MeshMeasurements.dx;
+YSize = MeshMeasurements.YCoord/MeshMeasurements.dy;
+ZSize = MeshMeasurements.ZCoord/MeshMeasurements.dz;
+
+YZFacePerXRow       = (XSize+1);
+YZFacePerXYPlane    = (XSize+1)*YSize;
+YZFaceNum           = (XSize+1)*YSize*ZSize;
+ZXFacePerXRow       = XSize;
+ZXFacePerXYPlane    = XSize*(YSize+1);
+ZXFaceNum           = XSize*(YSize+1)*ZSize;
+XYFacePerXRow       = XSize;
+XYFacePerXYPlane    = XSize*YSize;
+%XYFaceNum          = XSize*YSize*(ZSize+1);
+
+SpElemProperties_SpP_ElecWall = zeros(Num_of_Elem.SpP,1);
+for ZIdx = 1:ZSize
+    for YIdx = 1:YSize
+        for XIdx = [1 XSize+1]
+            PIdx = XIdx   + (YIdx-1)*YZFacePerXRow + (ZIdx-1)*YZFacePerXYPlane;
+            SpElemProperties_SpP_ElecWall(PIdx) = true;
+        end
+    end
+end
+for ZIdx = 1:ZSize
+    for YIdx = [1 YSize+1]
+        for XIdx = 1:XSize
+            PIdx = XIdx   + (YIdx-1)*ZXFacePerXRow + (ZIdx-1)*ZXFacePerXYPlane+YZFaceNum;
+            SpElemProperties_SpP_ElecWall(PIdx) = true;
+        end
+    end
+end
+for ZIdx = [1 ZSize+1]
+    for YIdx = 1:YSize
+        for XIdx = 1:XSize
+            PIdx = XIdx   + (YIdx-1)*XYFacePerXRow + (ZIdx-1)*XYFacePerXYPlane+YZFaceNum+ZXFaceNum;
+            SpElemProperties_SpP_ElecWall(PIdx) = true;
+        end
+    end
+end
+
 end

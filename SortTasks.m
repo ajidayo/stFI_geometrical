@@ -21,5 +21,9 @@ if exist('StaTask','var') == 1
     TaskDepGraph = addedge(TaskDepGraph,StaTask,TgtTask);
 end
 clearvars StaTask TgtTask
-TaskOrder = toposort(TaskDepGraph);
+if numedges(TaskDepGraph) == 0
+    TaskOrder = 1;
+else
+    TaskOrder = toposort(TaskDepGraph);
+end
 end
