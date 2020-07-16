@@ -5,7 +5,7 @@ for SourceIdx = 1:size(Source,2)
 end
 DoF_Source = zeros(Sum,1); 
 for StepCount = 1:Num_of_Steps
-    StepCount
+    %StepCount
     for SourceIdx = 1:size(Source,2)
         UpdNum_Source       = Source(SourceIdx).UpdNum;
         WaveformFunction    = Source(SourceIdx).WaveformFunctionHandle;
