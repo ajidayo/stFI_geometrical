@@ -24,7 +24,7 @@ for SpSIdx = 1:Num_of_Elem.SpS
         end
     else
         
-        SurroundingSpV = find(sC(:,SpSIdx).'*sD.');
+        SurroundingSpV = find(logical(sC(:,SpSIdx)).'*logical(sD).');
         ratio = 1.0/size(SurroundingSpV,1);
         Sum = 0;
         for SurrSpVIdx = 1:size(SurroundingSpV,1)

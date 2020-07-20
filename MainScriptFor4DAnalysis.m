@@ -10,7 +10,7 @@ SelectPreset=1;% Preset {none} available. See ParameterPreset for details for ea
 % Usage: NodePos(SpSIdx).Vec
 % RefImpedance_SpV           = GenerateReferenceImpedancePattern();
 RefImpedance_SpV           = ones(Num_of_Elem.SpV,1);
-cdt                         = 0.5;
+cdt                         = 0.3;
 disp('point1')
 %%
 [SpElemProperties,Num_of_Elem.STP] ...
@@ -29,7 +29,7 @@ disp('point3')
 disp('point4')
 [kappa,FaceArea]            = ComputeKappa_4D_ST(cdt,sG,sC,sD,D0,D1,D2,D3,NodePos,SpElemProperties,Num_of_Elem);
 Z                           = ComputeImpedance_for_EachSTPs(RefImpedance_SpV,sC,sD,SpElemProperties,Num_of_Elem);
-Kappa_over_Z                = kappa/Z;
+Kappa_over_Z                = kappa./Z;
 disp('point5')
 Source                      = SourceFDTD(MeshMeasurements,SpElemProperties);
 TMM                         = ConstructTimeMarchingMatrix_4D_ST(D1,D2,sC,Kappa_over_Z,Source,SpElemProperties,Task,TaskOrder,Num_of_Elem);
@@ -37,7 +37,7 @@ TMM                         = ConstructTimeMarchingMatrix_4D_ST(D1,D2,sC,Kappa_o
 %TMM_Fields                 = ExcludePEC_ST_Planes(TMM_Fields, SpElemProperties);
 %DoFs_FacesThenEdges        = InitializeFields;
 DoFs_FacesThenEdges         = zeros(Num_of_Elem.SpP+Num_of_Elem.SpS,1);
-Num_of_Steps                = 100;
+Num_of_Steps                = 30;
 Time                        = 0;
 disp('point6')
 DoFs_FacesThenEdges         = TimeMarch(Num_of_Steps,Time,cdt,TMM_Fields,TMM_Sources,DoFs_FacesThenEdges,Source);
