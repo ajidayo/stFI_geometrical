@@ -1,4 +1,4 @@
-function [SpElemProperties,Num_of_STP] = Properties_of_Sp_Elements(sG,sC,sD,SpElemProperties,Num_of_Elem)
+function [SpElemProperties,Num_of_STP] = Properties_of_Sp_Elements(sG,sC,sD,SpElemProperties,Num_of_Elem,NodePos)
 %% UpdNum
 UpdNum_SpV = SpElemProperties.SpV.UpdNum;
 UpdNum_SpP = zeros(Num_of_Elem.SpP,1);
@@ -55,4 +55,16 @@ for nth_SpP = find(SpElemProperties.SpP.Belong_to_ST_FI)
 end
 % Other SpPs, and SpSs belongs to Sp_FI-region.
 % ST_FI-SpSs which are incident to Sp_FI SpPs have 'SpFI_BoundarySpS' attribute (in this neccesary??) 
+
+%% position of Primal Faces
+for SpPIdx = 1:Num_of_Elem.SpP
+    Nodes = find(logical(sC(SpPIdx,:))*logical(sG));
+    PosVec_SpP = [0;0;0];
+    for SpNIdx = Nodes
+        PosVec_SpP = PosVec_SpP+NodePos.Prim(SpNIdx).Vec;
+    end
+    SpElemProperties.SpP.Position.x(SpPIdx) = PosVec_SpP(1)/size(Nodes,2); 
+    SpElemProperties.SpP.Position.y(SpPIdx) = PosVec_SpP(2)/size(Nodes,2); 
+    SpElemProperties.SpP.Position.z(SpPIdx) = PosVec_SpP(3)/size(Nodes,2); 
+end
 end

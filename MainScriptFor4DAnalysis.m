@@ -14,7 +14,7 @@ cdt                         = 0.3;
 disp('point1')
 %%
 [SpElemProperties,Num_of_Elem.STP] ...
-    = Properties_of_Sp_Elements(sG,sC,sD,SpElemProperties,Num_of_Elem);
+    = Properties_of_Sp_Elements(sG,sC,sD,SpElemProperties,Num_of_Elem,NodePos);
 disp('point2')
 Task                        = struct;
 TaskDepGraph = digraph;
@@ -34,11 +34,11 @@ disp('point5')
 Source                      = SourceFDTD(MeshMeasurements,SpElemProperties);
 TMM                         = ConstructTimeMarchingMatrix_4D_ST(D1,D2,sC,Kappa_over_Z,Source,SpElemProperties,Task,TaskOrder,Num_of_Elem);
 [TMM_Fields, TMM_Sources]   = SplitTMM_into_FieldsAndSources(TMM,Source,Num_of_Elem);
-%TMM_Fields                 = ExcludePEC_ST_Planes(TMM_Fields, SpElemProperties);
 %DoFs_FacesThenEdges        = InitializeFields;
 DoFs_FacesThenEdges         = zeros(Num_of_Elem.SpP+Num_of_Elem.SpS,1);
-Num_of_Steps                = 30;
+Num_of_Steps                = 50;
 Time                        = 0;
 disp('point6')
 DoFs_FacesThenEdges         = TimeMarch(Num_of_Steps,Time,cdt,TMM_Fields,TMM_Sources,DoFs_FacesThenEdges,Source);
-%PlotMagneticFlux
+constZ                      = 5;
+PlotMagneticFluxDensity_atZEquals(constZ,DoFs_FacesThenEdges,FaceArea,SpElemProperties,MeshMeasurements)
