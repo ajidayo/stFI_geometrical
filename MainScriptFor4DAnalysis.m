@@ -9,7 +9,7 @@ SelectPreset=1;% Preset {none} available. See ParameterPreset for details for ea
                         
 % Usage: NodePos(SpSIdx).Vec
 % RefImpedance_SpV           = GenerateReferenceImpedancePattern();
-RefImpedance_SpV           = ones(Num_of_Elem.SpV,1);
+RefImpedance_SpV            = ones(Num_of_Elem.SpV,1);
 cdt                         = 0.3;
 disp('point1')
 %%
@@ -35,8 +35,8 @@ Source                      = SourceFDTD(MeshMeasurements,SpElemProperties);
 TMM                         = ConstructTimeMarchingMatrix_4D_ST(D1,D2,sC,Kappa_over_Z,Source,SpElemProperties,Task,TaskOrder,Num_of_Elem);
 [TMM_Fields, TMM_Sources]   = SplitTMM_into_FieldsAndSources(TMM,Source,Num_of_Elem);
 %DoFs_FacesThenEdges        = InitializeFields;
-DoFs_FacesThenEdges         = zeros(Num_of_Elem.SpP+Num_of_Elem.SpS,1);
-Num_of_Steps                = 50;
+DoFs_FacesThenEdges         = rand(Num_of_Elem.SpP+Num_of_Elem.SpS,1);
+Num_of_Steps                = 100;
 Time                        = 0;
 disp('point6')
 DoFs_FacesThenEdges         = TimeMarch(Num_of_Steps,Time,cdt,TMM_Fields,TMM_Sources,DoFs_FacesThenEdges,Source);

@@ -28,6 +28,7 @@ for SourceIdx = 1:4
     Source(SourceIdx).UpdNum                    = SpElemProperties.SpS.UpdNum(SpSIdx);
     Source(SourceIdx).DualFace_tgt              = SpSIdx;
     Source(SourceIdx).WaveformFunctionHandle    = @sinewave;
+    Source(SourceIdx).WaveformFunctionHandle    = @zerowave;
     Source(SourceIdx).Area_TargetDualFace       = 1;
     Source(SourceIdx).FirstST_SourceIdx         = FirstST_SourceIdx;
     FirstST_SourceIdx                           = FirstST_SourceIdx + Source(SourceIdx).UpdNum;
