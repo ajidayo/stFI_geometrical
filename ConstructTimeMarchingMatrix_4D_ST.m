@@ -59,21 +59,26 @@ Map_SpP_STPPast         = logical(sparse(Num_of_Elem.SpP,Num_of_Elem.STP));
 Map_STPFutr_SpS         = logical(sparse(Num_of_Elem.STP,Num_of_Elem.SpS));
 Map_SpS_STPPast         = logical(sparse(Num_of_Elem.SpS,Num_of_Elem.STP));
 Map_SpPinctoSpS_STPPast = logical(sparse(Num_of_Elem.SpP,Num_of_Elem.STP));
+Map_SpSinctoSpP_STPFutr = logical(sparse(Num_of_Elem.SpS,Num_of_Elem.STP));
 
 for SpPIdx  = SpFI_TaskInfo.ElemIdx.SpP
     STPFutr = SpElemProperties.SpP.FirstSTPIdx(SpPIdx)+TimeSection_tgt;
     STPPast = SpElemProperties.SpP.FirstSTPIdx(SpPIdx)+TimeSection_tgt-1;
     Map_STPFutr_SpP(STPFutr,SpPIdx)    = true;
     Map_SpP_STPPast(SpPIdx,STPPast)    = true;
-    STP_to_Conserve_Prim(STPFutr)        = false;
+    STP_to_Conserve_Prim(STPFutr)      = false;
+    for SpSIdx  = find(sC(SpPIdx,:))
+        STPFutr = SpElemProperties.SpS.FirstSTPIdx(SpSIdx)+TimeSection_tgt;
+        Map_SpSinctoSpP_STPFutr(SpSIdx,STPFutr)    = true;
+    end
 end
 for SpSIdx  = SpFI_TaskInfo.ElemIdx.SpS
     STPFutr = SpElemProperties.SpS.FirstSTPIdx(SpSIdx)+TimeSection_tgt;
     STPPast = SpElemProperties.SpS.FirstSTPIdx(SpSIdx)+TimeSection_tgt-1;
     Map_STPFutr_SpS(STPFutr,SpSIdx)    = true;
     Map_SpS_STPPast(SpSIdx,STPPast)    = true;
-    STP_to_Conserve_Dual(STPFutr)        = false;
-    for SpPIdx  = find(sC(:,SpSIdx))
+    STP_to_Conserve_Dual(STPFutr)      = false;
+    for SpPIdx  = find(sC(:,SpSIdx)).'
         STPPast = SpElemProperties.SpP.FirstSTPIdx(SpPIdx)+TimeSection_tgt-1;
         Map_SpPinctoSpS_STPPast(SpPIdx,STPPast)    = true;
     end
@@ -99,7 +104,7 @@ for SourceIdx = 1:size(Source,2)
 end
 % the minus for the dual grid is caused by the sign [z] has.
 TMM_Onestep     = ...
-    [z*Map_STPFutr_SpS*(Map_SpS_STPPast -sC.'*Map_SpPinctoSpS_STPPast)*zinv, ...
+    [z*Map_STPFutr_SpS*(Map_SpS_STPPast - sC.'*Map_SpPinctoSpS_STPPast)*zinv, ...
     z*Map_STPFutr_SpS*SourcePattern;...
     sparse(Num_of_Elem.STP,size(SourcePattern,2)).',sparse(size(SourcePattern,2),size(SourcePattern,2))...
     ];
@@ -112,7 +117,7 @@ TMM_Onestep     = TMM_Onestep ...
 TMM_Redundant   = TMM_Onestep * TMM_Redundant;
 
 TMM_Onestep     = ...
-    [Map_STPFutr_SpP*(Map_SpP_STPPast - sC*(Map_STPFutr_SpS.') ), ...
+    [  Map_STPFutr_SpP*(Map_SpP_STPPast - sC  *Map_SpSinctoSpP_STPFutr), ...
     sparse(Num_of_Elem.STP,size(SourcePattern,2));...
     sparse(Num_of_Elem.STP,size(SourcePattern,2)).',sparse(size(SourcePattern,2),size(SourcePattern,2))...
     ];

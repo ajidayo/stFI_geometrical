@@ -10,10 +10,11 @@ for StepCount = 1:Num_of_Steps
         UpdNum_Source       = Source(SourceIdx).UpdNum;
         WaveformFunction    = Source(SourceIdx).WaveformFunctionHandle;
         Area_TargetDualFace = Source(SourceIdx).Area_TargetDualFace;
+        WaveformSign = Source(SourceIdx).WaveformSign;
         for CurrentTimeSection = 1:UpdNum_Source
             Working_at_Time = Time + (CurrentTimeSection-1)*cdt/UpdNum_Source;
             DoF_Source(Source(SourceIdx).FirstST_SourceIdx-1+CurrentTimeSection) ...
-                = WaveformFunction(Working_at_Time)*Area_TargetDualFace;
+                = WaveformSign*WaveformFunction(Working_at_Time)*Area_TargetDualFace;
         end
     end
     DoFs_FacesThenEdges = TMM_Fields*DoFs_FacesThenEdges +TMM_Sources*DoF_Source;

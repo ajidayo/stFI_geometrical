@@ -18,38 +18,38 @@ SpElemProperties.SpS.UpdNum=UpdNum_SpS;
 SpElemProperties.SpN.UpdNum=UpdNum_SpN;
 %% FirstSTPIdx
 CurrentSTPIdx=1;
-for nth_SpP=1:Num_of_Elem.SpP
-    SpElemProperties.SpP.FirstSTPIdx(nth_SpP) = CurrentSTPIdx;
-    CurrentSTPIdx = CurrentSTPIdx +UpdNum_SpP(nth_SpP) +1 ;
+for SpPIdx=1:Num_of_Elem.SpP
+    SpElemProperties.SpP.FirstSTPIdx(SpPIdx) = CurrentSTPIdx;
+    CurrentSTPIdx = CurrentSTPIdx +UpdNum_SpP(SpPIdx) +1;
 end
-for nth_SpS=1:Num_of_Elem.SpS
-    SpElemProperties.SpS.FirstSTPIdx(nth_SpS) = CurrentSTPIdx;
-    CurrentSTPIdx = CurrentSTPIdx +UpdNum_SpS(nth_SpS) +1 ;
+for SpSIdx=1:Num_of_Elem.SpS
+    SpElemProperties.SpS.FirstSTPIdx(SpSIdx) = CurrentSTPIdx;
+    CurrentSTPIdx = CurrentSTPIdx +UpdNum_SpS(SpSIdx) +1;
 end
 Num_of_STP = CurrentSTPIdx -1;
 %% tasktype
 % Usage Guide: SpElemPropreties.SpP.Belong_to_ST_FI(SpPIdx)
 % First check if SpPs are on dt-Interfaces. Interface SpPs belongs to ST_FI-region.
 % SpPs adjacent to interface-SpPs belongs to ST_FI-region.
-SpElemProperties.SpP.Belong_to_ST_FI = logical(sparse(Num_of_Elem.SpP,1));
+SpElemProperties.SpP.Belong_to_ST_FI = logical(sparse(1,Num_of_Elem.SpP));
 AdjM_SpP_via_SpV = sD.'*sD;
-for nth_SpP = 1:Num_of_Elem.SpP
+for SpPIdx = 1:Num_of_Elem.SpP
     Sum = 0;
-    IncSpV_List = find(sD(:,nth_SpP));
-    for IncSpV = IncSpV_List.'
+    IncSpV_List = find(sD(:,SpPIdx)).';
+    for IncSpV = IncSpV_List
         Sum = Sum + SpElemProperties.SpV.UpdNum(IncSpV);
     end
-    if Sum == size(IncSpV_List,1)*SpElemProperties.SpV.UpdNum(IncSpV_List(1))
-        SpElemProperties.SpP.Belong_to_ST_FI(nth_SpP) = false;
+    if Sum == size(IncSpV_List,2)*SpElemProperties.SpV.UpdNum(IncSpV_List(1))
+        SpElemProperties.SpP.Belong_to_ST_FI(SpPIdx) = false;
     else
-        SpElemProperties.SpP.Belong_to_ST_FI(nth_SpP) = true;
+        SpElemProperties.SpP.Belong_to_ST_FI(SpPIdx) = true;
         SpElemProperties.SpP.Belong_to_ST_FI(find(AdjM_SpP_via_SpV(SpP,:))) = true;
     end
 end
-SpElemProperties.SpS.Belong_to_ST_FI = logical(sparse(Num_of_Elem.SpS,1));
+SpElemProperties.SpS.Belong_to_ST_FI = logical(sparse(1,Num_of_Elem.SpS));
 % SpSs incident to ST_FI-SpPs belongs to ST_FI-region.
-for nth_SpP = find(SpElemProperties.SpP.Belong_to_ST_FI)
-    for IncSpS = find(sC(nth_SpP,:))
+for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI)
+    for IncSpS = find(sC(SpPIdx,:))
         SpElemProperties.SpS.Belong_to_ST_FI(IncSpS) = true;
     end
 end

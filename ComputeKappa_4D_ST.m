@@ -1,5 +1,6 @@
 function [kappa,FaceArea] = ComputeKappa_4D_ST(cdt,sG,sC,sD,D0,D1,D2,D3,NodePos,SpElemProperties,Num_of_Elem)
 kappa = zeros(Num_of_Elem.STP,1);
+
 FaceArea.Prim = zeros(Num_of_Elem.SpP,1);
 FaceArea.Dual = zeros(Num_of_Elem.SpS,1);
 disp('call ComputeKappa_for_SpFI_SpSs')
@@ -9,7 +10,7 @@ disp('call ComputeKappa_for_SpFI_SpPs')
 end
 %%
 function [kappa,FaceAreaPrim] = ComputeKappa_for_SpFI_SpPs(kappa,FaceAreaPrim,cdt,sG,sC,sD,NodePos,SpElemProperties,Num_of_Elem)
-for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI==false).'
+for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI==false)
     switch SpElemProperties.SpP.ElecWall(SpPIdx)
         case true
             for STPIdx = SpElemProperties.SpP.FirstSTPIdx(SpPIdx):...
@@ -29,7 +30,7 @@ for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI==false).'
 end
 end
 function [kappa,FaceAreaDual] = ComputeKappa_for_SpFI_SpSs(kappa,FaceAreaDual,cdt,sG,sC,sD,NodePos,SpElemProperties,Num_of_Elem)
-for SpSIdx = find(SpElemProperties.SpS.Belong_to_ST_FI==false).'
+for SpSIdx = find(SpElemProperties.SpS.Belong_to_ST_FI==false)
     switch SpElemProperties.SpS.PEC(SpSIdx)
         case true
             for STPIdx = SpElemProperties.SpS.FirstSTPIdx(SpSIdx):...

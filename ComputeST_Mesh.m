@@ -8,7 +8,7 @@ D1 = sparse(Num_of_Elem.STP     ,Num_of_Elem.STS    );
 D2 = sparse(Num_of_Elem.STOmega ,Num_of_Elem.STP    );
 D3 = sparse(Num_of_Elem.STV     ,Num_of_Elem.STOmega);
 
-if size(find(SpElemProperties.SpS.Belong_to_ST_FI),1)==0
+if size(find(SpElemProperties.SpS.Belong_to_ST_FI),2)==0
     return
 end
 
