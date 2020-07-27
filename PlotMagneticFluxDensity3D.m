@@ -15,21 +15,21 @@ ZSize = MeshMeasurements.ZCoord/MeshMeasurements.dz;
 B_SquareoidMesh = zeros(XSize+1,YSize+1,ZSize+1,SpDIM);
 Area_Squareoid  = ones(XSize+1,YSize+1,ZSize+1,SpDIM);
 for SpPIdx = 1:Num_of_Elem.SpP
-    xIdx = dx*round(SpElemProperties.SpP.Position.x(SpPIdx)/dx);
-    yIdx = dy*round(SpElemProperties.SpP.Position.y(SpPIdx)/dy);
-    zIdx = dz*round(SpElemProperties.SpP.Position.z(SpPIdx)/dz);
+    xIdx = SpElemProperties.SpP.Position.x(SpPIdx)/dx;
+    yIdx = SpElemProperties.SpP.Position.y(SpPIdx)/dy;
+    zIdx = SpElemProperties.SpP.Position.z(SpPIdx)/dz;
     if abs(xIdx - round(xIdx)) < EPSILON
-        dimIdx = 1
+        dimIdx = 1;
         xIdx = round(xIdx)+1;
         yIdx =  ceil(yIdx+EPSILON);
         zIdx =  ceil(zIdx+EPSILON);
     elseif abs(yIdx - round(yIdx)) < EPSILON
-        dimIdx = 2
+        dimIdx = 2;
         xIdx =  ceil(xIdx+EPSILON);
         yIdx = round(yIdx)+1;
         zIdx =  ceil(zIdx+EPSILON);
     elseif abs(zIdx - round(zIdx)) < EPSILON
-        dimIdx = 3
+        dimIdx = 3;
         xIdx =  ceil(xIdx+EPSILON);
         yIdx =  ceil(yIdx+EPSILON);
         zIdx = round(zIdx)+1;
@@ -73,14 +73,14 @@ end
 
 figure('name','B, Calculated by New Method')
 xa = gca;
-scale = 100;
+scale = 2000;
 quiver3(VecPosX,VecPosY,VecPosZ,B_Vol_X,B_Vol_Y,B_Vol_Z,scale)
 xlabel('x','FontSize',30)
 ylabel('y','FontSize',30)
 zlabel('z','FontSize',30)
 xlim([0 XSize*dx])
 ylim([0 YSize*dy])
-ylim([0 ZSize*dz])
+zlim([0 ZSize*dz])
 xticks([0 dx*XSize/4 dx*XSize/2 dx*XSize*3/4 dx*XSize])
 yticks([0 dy*YSize/4 dy*YSize/2 dy*YSize*3/4 dy*YSize])
 zticks([0 dz*ZSize/4 dz*ZSize/2 dz*ZSize*3/4 dz*ZSize])
