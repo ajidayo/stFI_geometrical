@@ -1,9 +1,9 @@
 clear;
-global DIM EPSILON
-DIM =3;
+global SpDIM EPSILON
+SpDIM =3;
 EPSILON = 10^(-7);
 %% Inputs
-SelectPreset=1;% Preset {none} available. See ParameterPreset for details for each settings.
+SelectPreset=1;% Preset = {1} is available. See ParameterPreset for details for each settings.
 [RefMeshPresetType,MeshMeasurements,LocalUpdateNum] ...
                             = ParameterPreset(SelectPreset);
 [sG,sC,sD,NodePos,Num_of_Elem,SpElemProperties] ...
@@ -39,7 +39,7 @@ TMM                         = ConstructTimeMarchingMatrix_4D_ST(D1,D2,sC,Kappa_o
 %DoFs_FacesThenEdges        = InitializeFields;
 DoFs_FacesThenEdges         = zeros(Num_of_Elem.SpP+Num_of_Elem.SpS,1);
 %DoFs_FacesThenEdges         = rand(Num_of_Elem.SpP+Num_of_Elem.SpS,1);
-Num_of_Steps                = 150;
+Num_of_Steps                = 10000;
 Time                        = 0;
 disp('point6')
 DoFs_FacesThenEdges         = TimeMarch(Num_of_Steps,Time,cdt,TMM_Fields,TMM_Sources,DoFs_FacesThenEdges,Source);

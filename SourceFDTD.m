@@ -1,4 +1,11 @@
 function Source = SourceFDTD(MeshMeasurements,SpElemProperties,sC)
+global SourcePeriod
+SourcePeriod = 20;
+
+disp("Waveform: Sinusoidal")
+Lightspeed = 1;
+wavelength = Lightspeed/SourcePeriod;
+disp(["Wavelength/meshsize = ", num2str(wavelength/MeshMeasurements.dx) ])
 
 XSize = MeshMeasurements.XCoord/MeshMeasurements.dx;
 YSize = MeshMeasurements.YCoord/MeshMeasurements.dy;
@@ -45,4 +52,9 @@ for SourceIdx = 1:4
     Source(SourceIdx).FirstST_SourceIdx         = FirstST_SourceIdx;
     FirstST_SourceIdx                           = FirstST_SourceIdx + Source(SourceIdx).UpdNum;
 end
+end
+
+function val = sinewave(x)
+global SourcePeriod
+    val = sin(x/SourcePeriod);
 end

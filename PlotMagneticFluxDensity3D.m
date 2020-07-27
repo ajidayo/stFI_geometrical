@@ -1,5 +1,5 @@
 function PlotMagneticFluxDensity3D(DoFs_FacesThenEdges,FaceArea,Num_of_Elem,SpElemProperties,MeshMeasurements)
-global DIM EPSILON
+global SpDIM EPSILON
 
 dx = MeshMeasurements.dx;
 dy = MeshMeasurements.dy;
@@ -12,28 +12,29 @@ ZSize = MeshMeasurements.ZCoord/MeshMeasurements.dz;
 % Disp_dy = dy;
 % Disp_dz = dz;
 
-B_SquareoidMesh = zeros(XSize+1,YSize+1,ZSize+1,DIM);
-Area_Squareoid  = ones(XSize+1,YSize+1,ZSize+1,DIM);
+B_SquareoidMesh = zeros(XSize+1,YSize+1,ZSize+1,SpDIM);
+Area_Squareoid  = ones(XSize+1,YSize+1,ZSize+1,SpDIM);
 for SpPIdx = 1:Num_of_Elem.SpP
     xIdx = dx*round(SpElemProperties.SpP.Position.x(SpPIdx)/dx);
     yIdx = dy*round(SpElemProperties.SpP.Position.y(SpPIdx)/dy);
     zIdx = dz*round(SpElemProperties.SpP.Position.z(SpPIdx)/dz);
     if abs(xIdx - round(xIdx)) < EPSILON
-        dimIdx = 1;
+        dimIdx = 1
         xIdx = round(xIdx)+1;
         yIdx =  ceil(yIdx+EPSILON);
         zIdx =  ceil(zIdx+EPSILON);
     elseif abs(yIdx - round(yIdx)) < EPSILON
-        dimIdx = 2;
+        dimIdx = 2
         xIdx =  ceil(xIdx+EPSILON);
         yIdx = round(yIdx)+1;
         zIdx =  ceil(zIdx+EPSILON);
     elseif abs(zIdx - round(zIdx)) < EPSILON
-        dimIdx = 3;
+        dimIdx = 3
         xIdx =  ceil(xIdx+EPSILON);
         yIdx =  ceil(yIdx+EPSILON);
         zIdx = round(zIdx)+1;
     else
+        disp("hoge")
         continue;
     end
     B_SquareoidMesh(xIdx,yIdx,zIdx,dimIdx) ...

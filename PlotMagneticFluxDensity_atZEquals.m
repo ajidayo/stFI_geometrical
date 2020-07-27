@@ -23,6 +23,7 @@ xlabel('x','FontSize',30)
 ylabel('y','FontSize',30)
 xlim([0+0.5 XSize+0.5])
 ylim([0+0.5 YSize+0.5])
+zlim([-0.02 0.02])
 xticks([0+0.5 XSize/4+0.5 XSize/2+0.5 XSize*3/4+0.5 XSize/+0.5])
 yticks([0+0.5 YSize/4+0.5 YSize/2+0.5 YSize*3/4+0.5 YSize/+0.5])
 xa.FontSize = 20;
