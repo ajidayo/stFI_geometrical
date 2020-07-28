@@ -8,17 +8,13 @@ SelectPreset=1;% Preset = {1} is available. See ParameterPreset for details for 
                             = ParameterPreset(SelectPreset);
 [sG,sC,sD,NodePos,Num_of_Elem,SpElemProperties] ...
                             = GenerateReferenceMesh_3D_Sp(RefMeshPresetType,MeshMeasurements,LocalUpdateNum);
-
-
-% Usage: NodePos(SpSIdx).Vec
 % RefImpedance_SpV           = GenerateReferenceImpedancePattern();
 RefImpedance_SpV            = ones(Num_of_Elem.SpV,1);
 cdt                         = 0.3;
 disp(['cdt = ', num2str(cdt)])
 disp('point1')
 %%
-[SpElemProperties,Num_of_Elem.STP] ...
-    = Properties_of_Sp_Elements(sG,sC,sD,SpElemProperties,Num_of_Elem,NodePos);
+[SpElemProperties,Num_of_Elem.STP,PrimFacePos] = Properties_of_Sp_Elements(sG,sC,sD,SpElemProperties,Num_of_Elem,NodePos);
 disp('point2')
 Task                        = struct;
 TaskDepGraph = digraph;
@@ -52,7 +48,7 @@ Time                        = 0;
 disp('point6')
 DoFs_FacesThenEdges         = TimeMarch(Num_of_Steps,Time,cdt,TMM_Fields,TMM_Sources,DoFs_FacesThenEdges,Source);
 ZConst                      = 5;
-PlotMagneticFluxDensity_atZEquals(ZConst,DoFs_FacesThenEdges,FaceArea,SpElemProperties,MeshMeasurements)
+PlotMagneticFluxDensity_atZEquals(ZConst,DoFs_FacesThenEdges,FaceArea,PrimFacePos,SpElemProperties,MeshMeasurements)
 YConst                      = 5;
-PlotMagneticFluxDensity2D_at_YEquals(DoFs_FacesThenEdges,YConst,FaceArea,Num_of_Elem,SpElemProperties,MeshMeasurements)
-PlotMagneticFluxDensity3D(DoFs_FacesThenEdges,FaceArea,Num_of_Elem,SpElemProperties,MeshMeasurements)
+PlotMagneticFluxDensity2D_at_YEquals(DoFs_FacesThenEdges,YConst,FaceArea,Num_of_Elem,PrimFacePos,MeshMeasurements)
+PlotMagneticFluxDensity3D(DoFs_FacesThenEdges,FaceArea,Num_of_Elem,PrimFacePos,MeshMeasurements)

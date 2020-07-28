@@ -1,4 +1,4 @@
-function PlotMagneticFluxDensity3D(DoFs_FacesThenEdges,FaceArea,Num_of_Elem,SpElemProperties,MeshMeasurements)
+function PlotMagneticFluxDensity3D(DoFs_FacesThenEdges,FaceArea,Num_of_Elem,PrimFacePos,MeshMeasurements)
 global SpDIM EPSILON
 
 dx = MeshMeasurements.dx;
@@ -15,9 +15,9 @@ ZSize = MeshMeasurements.ZCoord/MeshMeasurements.dz;
 B_SquareoidMesh = zeros(XSize+1,YSize+1,ZSize+1,SpDIM);
 Area_Squareoid  = ones(XSize+1,YSize+1,ZSize+1,SpDIM);
 for SpPIdx = 1:Num_of_Elem.SpP
-    xIdx = SpElemProperties.SpP.Position(SpPIdx).Vec(1)/dx;
-    yIdx = SpElemProperties.SpP.Position(SpPIdx).Vec(2)/dy;
-    zIdx = SpElemProperties.SpP.Position(SpPIdx).Vec(3)/dz;
+    xIdx = PrimFacePos(SpPIdx).Vec(1)/dx;
+    yIdx = PrimFacePos(SpPIdx).Vec(2)/dy;
+    zIdx = PrimFacePos(SpPIdx).Vec(3)/dz;
     if abs(xIdx - round(xIdx)) < EPSILON
         dimIdx = 1;
         xIdx = round(xIdx)+1;

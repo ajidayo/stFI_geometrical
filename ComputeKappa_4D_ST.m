@@ -19,7 +19,8 @@ for SpSIdx = find(SpElemProperties.SpS.Belong_to_ST_FI==true)
             end
             FaceArea.Dual(SpSIdx) = 1;
         case false
-            
+            %
+            %
     end
 end
 for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI==true)
@@ -31,7 +32,8 @@ for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI==true)
             end
             FaceArea.Prim(SpPIdx) = 1;
         case false
-            
+            %
+            %
     end
 end
 end

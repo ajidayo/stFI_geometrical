@@ -1,7 +1,4 @@
-function [SpElemProperties,Num_of_STP] = Properties_of_Sp_Elements(sG,sC,sD,SpElemProperties,Num_of_Elem,NodePos)
-
-global SpDIM
-
+function [SpElemProperties,Num_of_STP,PrimFacePos] = Properties_of_Sp_Elements(sG,sC,sD,SpElemProperties,Num_of_Elem,NodePos)
 %% UpdNum
 UpdNum_SpV = SpElemProperties.SpV.UpdNum;
 UpdNum_SpP = zeros(Num_of_Elem.SpP,1);
@@ -46,7 +43,7 @@ for SpPIdx = 1:Num_of_Elem.SpP
         SpElemProperties.SpP.Belong_to_ST_FI(SpPIdx) = false;
     else
         SpElemProperties.SpP.Belong_to_ST_FI(SpPIdx) = true;
-        SpElemProperties.SpP.Belong_to_ST_FI(find(AdjM_SpP_via_SpV(SpPIdx,:))) = true;
+        SpElemProperties.SpP.Belong_to_ST_FI(logical(AdjM_SpP_via_SpV(SpPIdx,:))) = true;
     end
 end
 SpElemProperties.SpS.Belong_to_ST_FI = logical(sparse(1,Num_of_Elem.SpS));
@@ -60,12 +57,13 @@ end
 % ST_FI-SpSs which are incident to Sp_FI SpPs have 'SpFI_BoundarySpS' attribute (in this neccesary??) 
 
 %% position of Primal Faces
+PrimFacePos(Num_of_Elem.SpP).Vec = [0;0;0];
 for SpPIdx = 1:Num_of_Elem.SpP
-    Nodes = find( logical(sC(SpPIdx,:))*logical(sG) );
+    Nodes = find(( logical(sG).'*logical(sC(SpPIdx,:)).' ).');
     PosVec_SpP = [0;0;0];
     for SpNIdx = Nodes
         PosVec_SpP = PosVec_SpP+NodePos.Prim(SpNIdx).Vec;
     end
-    SpElemProperties.SpP.Position(SpPIdx).Vec = PosVec_SpP/size(Nodes,2);
+    PrimFacePos(SpPIdx).Vec = PosVec_SpP/size(Nodes,2);
 end
 end
