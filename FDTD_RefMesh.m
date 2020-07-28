@@ -22,7 +22,14 @@ NodePos = FDTD_NodePos(MeshMeasurements);
 SpElemProperties.SpV.UpdNum     = LocalUpdateNum*ones(Num_of_Elem.SpV,1);
 SpElemProperties.SpS.PEC        = FDTD_SpS_PEC(MeshMeasurements,Num_of_Elem);
 SpElemProperties.SpP.ElecWall   = FDTD_SpP_ElecWall(MeshMeasurements,Num_of_Elem);
-
+SpElemProperties.SpP.PrimAreaIsGiven = true(Num_of_Elem.SpP,1);
+SpElemProperties.SpP.DualLengIsGiven = true(Num_of_Elem.SpP,1);
+SpElemProperties.SpS.PrimLengIsGiven = true(Num_of_Elem.SpS,1);
+SpElemProperties.SpS.DualAreaIsGiven = true(Num_of_Elem.SpS,1);
+SpElemProperties.SpP.PrimArea = ones(Num_of_Elem.SpP,1);
+SpElemProperties.SpP.DualLeng = ones(Num_of_Elem.SpP,1);
+SpElemProperties.SpS.PrimLeng = ones(Num_of_Elem.SpS,1);
+SpElemProperties.SpS.DualArea = ones(Num_of_Elem.SpS,1);
 end
 
 function sG = FDTD_sG(MeshMeasurements,Num_of_Elem)
@@ -44,7 +51,7 @@ NodePerXRow        = XSize+1;
 NodePerXYPlane     = (XSize+1)*(YSize+1);
 %NodeNum            = (XSize+1)*(YSize+1)*(ZSize+1);
 
-sG = sparse(Num_of_Elem.SpS,Num_of_Elem.SpN);
+sG = spalloc(Num_of_Elem.SpS,Num_of_Elem.SpN,2*Num_of_Elem.SpS);
 for ZIdx = 1:ZSize+1
     for YIdx = 1:YSize+1
         for XIdx = 1:XSize
@@ -106,7 +113,7 @@ ZEdgePerXRow        = (XSize+1);
 ZEdgePerXYPlane     = (XSize+1)*(YSize+1);
 %ZEdgeNum           = (XSize+1)*(YSize+1)*ZSize;
 
-sC = sparse(Num_of_Elem.SpP,Num_of_Elem.SpS);
+sC = spalloc(Num_of_Elem.SpP,Num_of_Elem.SpS,4*Num_of_Elem.SpP);
 
 for ZIdx = 1:ZSize
     for YIdx = 1:YSize
@@ -178,7 +185,7 @@ XYFacePerXRow       = XSize;
 XYFacePerXYPlane    = XSize*YSize;
 %XYFaceNum        = XSize*YSize*(ZSize+1);
 
-sD = sparse(Num_of_Elem.SpV,Num_of_Elem.SpP);
+sD = spalloc(Num_of_Elem.SpV,Num_of_Elem.SpP,6*Num_of_Elem.SpV);
 for ZIdx = 1:ZSize
     for YIdx = 1:YSize
         for XIdx = 1:XSize

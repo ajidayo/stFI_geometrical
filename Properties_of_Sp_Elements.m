@@ -1,17 +1,20 @@
 function [SpElemProperties,Num_of_STP] = Properties_of_Sp_Elements(sG,sC,sD,SpElemProperties,Num_of_Elem,NodePos)
+
+global SpDIM
+
 %% UpdNum
 UpdNum_SpV = SpElemProperties.SpV.UpdNum;
 UpdNum_SpP = zeros(Num_of_Elem.SpP,1);
 UpdNum_SpS = zeros(Num_of_Elem.SpS,1);
 UpdNum_SpN = zeros(Num_of_Elem.SpN,1);
-for SpP=1:Num_of_Elem.SpP
-    UpdNum_SpP(SpP) = max(UpdNum_SpV(find(sD(:,SpP))));
+for SpPIdx=1:Num_of_Elem.SpP
+    UpdNum_SpP(SpPIdx) = max(UpdNum_SpV(logical(sD(:,SpPIdx))));
 end
-for SpS=1:Num_of_Elem.SpS
-    UpdNum_SpS(SpS) = max(UpdNum_SpP(find(sC(:,SpS))));
+for SpSIdx=1:Num_of_Elem.SpS
+    UpdNum_SpS(SpSIdx) = max(UpdNum_SpP(logical(sC(:,SpSIdx))));
 end
-for SpN=1:Num_of_Elem.SpN
-    UpdNum_SpN(SpN) = max(UpdNum_SpS(find(sG(:,SpN))));
+for SpNIdx=1:Num_of_Elem.SpN
+    UpdNum_SpN(SpNIdx) = max(UpdNum_SpS(logical(sG(:,SpNIdx))));
 end
 SpElemProperties.SpP.UpdNum=UpdNum_SpP;
 SpElemProperties.SpS.UpdNum=UpdNum_SpS;
@@ -43,7 +46,7 @@ for SpPIdx = 1:Num_of_Elem.SpP
         SpElemProperties.SpP.Belong_to_ST_FI(SpPIdx) = false;
     else
         SpElemProperties.SpP.Belong_to_ST_FI(SpPIdx) = true;
-        SpElemProperties.SpP.Belong_to_ST_FI(find(AdjM_SpP_via_SpV(SpP,:))) = true;
+        SpElemProperties.SpP.Belong_to_ST_FI(find(AdjM_SpP_via_SpV(SpPIdx,:))) = true;
     end
 end
 SpElemProperties.SpS.Belong_to_ST_FI = logical(sparse(1,Num_of_Elem.SpS));
@@ -58,13 +61,11 @@ end
 
 %% position of Primal Faces
 for SpPIdx = 1:Num_of_Elem.SpP
-    Nodes = find(logical(sC(SpPIdx,:))*logical(sG));
+    Nodes = find( logical(sC(SpPIdx,:))*logical(sG) );
     PosVec_SpP = [0;0;0];
     for SpNIdx = Nodes
         PosVec_SpP = PosVec_SpP+NodePos.Prim(SpNIdx).Vec;
     end
-    SpElemProperties.SpP.Position.x(SpPIdx) = PosVec_SpP(1)/size(Nodes,2); 
-    SpElemProperties.SpP.Position.y(SpPIdx) = PosVec_SpP(2)/size(Nodes,2); 
-    SpElemProperties.SpP.Position.z(SpPIdx) = PosVec_SpP(3)/size(Nodes,2); 
+    SpElemProperties.SpP.Position(SpPIdx).Vec = PosVec_SpP/size(Nodes,2);
 end
 end

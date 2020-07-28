@@ -4,12 +4,40 @@ kappa = zeros(Num_of_Elem.STP,1);
 FaceArea.Prim = zeros(Num_of_Elem.SpP,1);
 FaceArea.Dual = zeros(Num_of_Elem.SpS,1);
 disp('call ComputeKappa_for_SpFI_SpSs')
-[kappa,FaceArea.Dual]   = ComputeKappa_for_SpFI_SpSs(kappa,FaceArea.Prim,cdt,sG,sC,sD,NodePos,SpElemProperties,Num_of_Elem);
+[kappa,FaceArea.Dual]   = ComputeKappa_for_SpFI_SpSs(kappa,FaceArea.Prim,cdt,sG,sC,sD,NodePos,SpElemProperties);
 disp('call ComputeKappa_for_SpFI_SpPs')
-[kappa,FaceArea.Prim]   = ComputeKappa_for_SpFI_SpPs(kappa,FaceArea.Dual,cdt,sG,sC,sD,NodePos,SpElemProperties,Num_of_Elem);
+[kappa,FaceArea.Prim]   = ComputeKappa_for_SpFI_SpPs(kappa,FaceArea.Dual,cdt,sG,sC,sD,NodePos,SpElemProperties);
 end
 %%
-function [kappa,FaceAreaPrim] = ComputeKappa_for_SpFI_SpPs(kappa,FaceAreaPrim,cdt,sG,sC,sD,NodePos,SpElemProperties,Num_of_Elem)
+function [kappa,FaceArea] = ComputeKappa_for_STFI_SpPs_and_SpSs(kappa,FaceArea,cdt,sG,sC,sD,NodePos,SpElemProperties)
+for SpSIdx = find(SpElemProperties.SpS.Belong_to_ST_FI==true)
+    switch SpElemProperties.SpS.PEC(SpSIdx)
+        case true
+            for STPIdx = SpElemProperties.SpS.FirstSTPIdx(SpSIdx):...
+                    SpElemProperties.SpS.FirstSTPIdx(SpSIdx)+SpElemProperties.SpS.UpdNum(SpSIdx)
+                kappa(STPIdx) = 0;
+            end
+            FaceArea.Dual(SpSIdx) = 1;
+        case false
+            
+    end
+end
+for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI==true)
+    switch SpElemProperties.SpP.ElecWall(SpPIdx) 
+        case true
+            for STPIdx = SpElemProperties.SpP.FirstSTPIdx(SpPIdx):...
+                    SpElemProperties.SpP.FirstSTPIdx(SpPIdx)+SpElemProperties.SpP.UpdNum(SpPIdx)
+                kappa(STPIdx) = 0;
+            end
+            FaceArea.Prim(SpPIdx) = 1;
+        case false
+            
+    end
+end
+end
+
+%%
+function [kappa,FaceAreaPrim] = ComputeKappa_for_SpFI_SpPs(kappa,FaceAreaPrim,cdt,sG,sC,sD,NodePos,SpElemProperties)
 for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI==false)
     switch SpElemProperties.SpP.ElecWall(SpPIdx)
         case true
@@ -19,8 +47,13 @@ for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI==false)
             end
             FaceAreaPrim(SpPIdx) = 1;
         case false
-            Area_PrimSTP = SpFaceArea(SpPIdx,sG,sC,NodePos.Prim);
-            Area_DualSTP = SpEdgeLength(SpPIdx,sD.',NodePos.Dual)*cdt/SpElemProperties.SpP.UpdNum(SpPIdx);
+            if SpElemProperties.SpP.PrimAreaIsGiven(SpPIdx) == true && SpElemProperties.SpP.DualLengIsGiven(SpPIdx) == true
+                Area_PrimSTP = SpElemProperties.SpP.PrimArea(SpPIdx);
+                Area_DualSTP = SpElemProperties.SpP.DualLeng(SpPIdx)*cdt/SpElemProperties.SpP.UpdNum(SpPIdx);
+            else
+                Area_PrimSTP = SpFaceArea(SpPIdx,sG,sC,NodePos.Prim);
+                Area_DualSTP = SpEdgeLength(SpPIdx,sD.',NodePos.Dual)*cdt/SpElemProperties.SpP.UpdNum(SpPIdx);
+            end
             for STPIdx = SpElemProperties.SpP.FirstSTPIdx(SpPIdx):...
                     SpElemProperties.SpP.FirstSTPIdx(SpPIdx)+SpElemProperties.SpP.UpdNum(SpPIdx)
                 kappa(STPIdx) = Area_DualSTP/Area_PrimSTP;
@@ -29,7 +62,7 @@ for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI==false)
     end
 end
 end
-function [kappa,FaceAreaDual] = ComputeKappa_for_SpFI_SpSs(kappa,FaceAreaDual,cdt,sG,sC,sD,NodePos,SpElemProperties,Num_of_Elem)
+function [kappa,FaceAreaDual] = ComputeKappa_for_SpFI_SpSs(kappa,FaceAreaDual,cdt,sG,sC,sD,NodePos,SpElemProperties)
 for SpSIdx = find(SpElemProperties.SpS.Belong_to_ST_FI==false)
     switch SpElemProperties.SpS.PEC(SpSIdx)
         case true
@@ -39,8 +72,13 @@ for SpSIdx = find(SpElemProperties.SpS.Belong_to_ST_FI==false)
             end
             FaceAreaDual(SpSIdx) = 1;
         case false
-            Area_PrimSTP = SpEdgeLength(SpSIdx,sG,NodePos.Prim)*cdt/SpElemProperties.SpS.UpdNum(SpSIdx);
-            Area_DualSTP = SpFaceArea(SpSIdx,sD.',sC.',NodePos.Dual);
+            if SpElemProperties.SpS.PrimLengIsGiven(SpSIdx) == true && SpElemProperties.SpS.DualAreaIsGiven(SpSIdx) == true  
+                Area_PrimSTP = SpElemProperties.SpS.PrimLeng(SpSIdx)*cdt/SpElemProperties.SpS.UpdNum(SpSIdx);
+                Area_DualSTP = SpElemProperties.SpS.DualArea(SpSIdx);               
+            else
+                Area_PrimSTP = SpEdgeLength(SpSIdx,sG,NodePos.Prim)*cdt/SpElemProperties.SpS.UpdNum(SpSIdx);
+                Area_DualSTP = SpFaceArea(SpSIdx,sD.',sC.',NodePos.Dual);
+            end
             for STPIdx = SpElemProperties.SpS.FirstSTPIdx(SpSIdx):...
                     SpElemProperties.SpS.FirstSTPIdx(SpSIdx)+SpElemProperties.SpS.UpdNum
                 kappa(STPIdx) = -1*Area_DualSTP/Area_PrimSTP;
