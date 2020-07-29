@@ -1,4 +1,4 @@
-function [SpElemProperties,Num_of_STP,PrimFacePos] = Properties_of_Sp_Elements(sG,sC,sD,SpElemProperties,Num_of_Elem,NodePos)
+function [SpElemProperties,STElemProperties,Num_of_Elem,PrimFacePos] = Properties_of_Sp_Elements(sG,sC,sD,SpElemProperties,Num_of_Elem,NodePos)
 %% UpdNum
 UpdNum_SpV = SpElemProperties.SpV.UpdNum;
 UpdNum_SpP = zeros(Num_of_Elem.SpP,1);
@@ -26,7 +26,28 @@ for SpSIdx=1:Num_of_Elem.SpS
     SpElemProperties.SpS.FirstSTPIdx(SpSIdx) = CurrentSTPIdx;
     CurrentSTPIdx = CurrentSTPIdx +UpdNum_SpS(SpSIdx) +1;
 end
-Num_of_STP = CurrentSTPIdx -1;
+Num_of_Elem.STP = CurrentSTPIdx -1;
+
+%% FirstSTNIdx
+CurrentSTNIdx=1;
+for SpNIdx=1:Num_of_Elem.SpN
+    SpElemProperties.SpN.FirstSTNIdx(SpNIdx) = CurrentSTNIdx;
+    CurrentSTNIdx = CurrentSTNIdx +UpdNum_SpN(SpNIdx) +1;
+end
+Num_of_Elem.STN = CurrentSTNIdx -1;
+
+%%
+CurrentSTVIdx=0;
+for SpVIdx=1:Num_of_Elem.SpV
+    UpdNum = UpdNum_SpV(SpVIdx);
+    for TimeIdx = -0.5/UpdNum:1/UpdNum:(UpdNum-0.5)/UpdNum
+        CurrentSTVIdx = CurrentSTVIdx+1;
+        STElemProperties.STV.TimeIdx(CurrentSTVIdx) = TimeIdx;
+        STElemProperties.STV.RefSpV(CurrentSTVIdx)  = SpVIdx;
+    end
+end
+Num_of_Elem.STV = CurrentSTVIdx;
+
 %% tasktype
 % Usage Guide: SpElemPropreties.SpP.Belong_to_ST_FI(SpPIdx)
 % First check if SpPs are on dt-Interfaces. Interface SpPs belongs to ST_FI-region.

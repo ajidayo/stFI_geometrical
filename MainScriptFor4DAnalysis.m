@@ -14,10 +14,13 @@ cdt                         = 0.3;
 disp(['cdt = ', num2str(cdt)])
 disp('point1')
 %%
-[SpElemProperties,Num_of_Elem.STP,PrimFacePos] = Properties_of_Sp_Elements(sG,sC,sD,SpElemProperties,Num_of_Elem,NodePos);
+[SpElemProperties,STElemProperties,Num_of_Elem,PrimFacePos] = Properties_of_Sp_Elements(sG,sC,sD,SpElemProperties,Num_of_Elem,NodePos);
+
 disp('point2')
+[D0,D1,D2,D3]               = ComputeST_Mesh(sG,sC,sD,SpElemProperties,Num_of_Elem);
+
 Task                        = struct;
-TaskDepGraph = digraph;
+TaskDepGraph                = digraph;
 Map_SpElem_to_FirstGlobTask = struct;
 %[Task,TaskDepGraph] = GenerateST_FI_Tasks_4D_ST;
 [Task,TaskDepGraph,SpElemProperties,Map_SpElem_to_FirstGlobTask] ...
@@ -25,7 +28,6 @@ Map_SpElem_to_FirstGlobTask = struct;
 TaskOrder                   = SortTasks(TaskDepGraph,Map_SpElem_to_FirstGlobTask,sC,SpElemProperties);
 %clearvars TaskDepGraph;
 disp('point3')
-[D0,D1,D2,D3]               = ComputeST_Mesh(sG,sC,sD,SpElemProperties,Num_of_Elem);
 disp('point4')
 [kappa,FaceArea]            = ComputeKappa_4D_ST(cdt,sG,sC,sD,D0,D1,D2,D3,NodePos,SpElemProperties,Num_of_Elem);
 disp('point4.1')
