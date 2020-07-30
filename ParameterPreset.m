@@ -2,7 +2,7 @@ function [RefMeshPresetType,MeshMeasurements,LocalUpdateNum] = ParameterPreset(S
 switch SelectPreset
     case 1
         RefMeshPresetType = 'FDTD';
-        LocalUpdateNum = 1;
+        LocalUpdateNum = 2;
         MeshMeasurements.XCoord = 10;
         MeshMeasurements.YCoord = 10;
         MeshMeasurements.ZCoord = 10;

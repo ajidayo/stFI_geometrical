@@ -22,9 +22,15 @@ for SpS_tgt=1:Num_of_Elem.SpS
     if SpElemProperties.SpS.Belong_to_ST_FI(SpS_tgt) || SpElemProperties.SpS.PEC(SpS_tgt)
         continue;
     else
-        SpP_fetch = find(sC(:,SpS_tgt),1);
-        SpFI_TaskIdx = SpElemProperties.SpP.SpFI_TaskIdx(SpP_fetch);
-        Num_of_IncludedSpS = SpFI_TaskInfo(SpFI_TaskIdx).ElemNum.SpS+1;
+        IncSpSIdx = find(sC(:,SpS_tgt)).';
+        for Counter = 1:size(IncSpSIdx,2)
+            SpP_fetch = IncSpSIdx(Counter);
+            SpFI_TaskIdx = SpElemProperties.SpP.SpFI_TaskIdx(SpP_fetch);
+            if  SpFI_TaskIdx>0
+                break
+            end
+        end
+        Num_of_IncludedSpS = SpFI_TaskInfo(SpFI_TaskIdx).ElemNum.SpS +1;
         SpFI_TaskInfo(SpFI_TaskIdx).ElemNum.SpS = Num_of_IncludedSpS;
         SpFI_TaskInfo(SpFI_TaskIdx).ElemIdx.SpS(Num_of_IncludedSpS) = SpS_tgt;
         SpElemProperties.SpS.SpFI_TaskIdx(SpS_tgt)=SpFI_TaskIdx;

@@ -19,7 +19,20 @@ sG = FDTD_sG(MeshMeasurements,Num_of_Elem);
 sC = FDTD_sC(MeshMeasurements,Num_of_Elem);
 sD = FDTD_sD(MeshMeasurements,Num_of_Elem);
 NodePos = FDTD_NodePos(MeshMeasurements);
-SpElemProperties.SpV.UpdNum     = LocalUpdateNum*ones(Num_of_Elem.SpV,1);
+%%
+SpElemProperties.SpV.UpdNum     = ones(Num_of_Elem.SpV,1);
+VolPerXRow          = XSize;
+VolPerXYPlane       = XSize*YSize;
+%VolNum              = XSize*YSize*ZSize;
+for ZIdx = 1:ZSize
+    for YIdx = 1:YSize
+        for XIdx = round(XSize/2):XSize
+              SpVIdx = XIdx + (YIdx-1)*VolPerXRow + (ZIdx-1)*VolPerXYPlane;
+              SpElemProperties.SpV.UpdNum(SpVIdx) = LocalUpdateNum;
+        end
+    end
+end
+%%
 SpElemProperties.SpS.PEC        = FDTD_SpS_PEC(MeshMeasurements,Num_of_Elem);
 SpElemProperties.SpP.ElecWall   = FDTD_SpP_ElecWall(MeshMeasurements,Num_of_Elem);
 SpElemProperties.SpP.PrimAreaIsGiven = true(Num_of_Elem.SpP,1);

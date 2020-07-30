@@ -69,7 +69,7 @@ end
 
 %% D2
 for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI)
-    for IncSpVIdx = find(sD(:,SpPIdx))
+    for IncSpVIdx = find(sD(:,SpPIdx)).'
         UpdRatio = SpElemProperties.SpP.UpdNum(SpPIdx)/SpElemProperties.SpV.UpdNum(IncSpVIdx);
         for CurrentTime = 0:SpElemProperties.SpV.UpdNum(IncSpVIdx)
             STOmega_tar = SpElemProperties.SpV.FirstSTOmegaIdx(IncSpVIdx)+CurrentTime;
@@ -78,12 +78,12 @@ for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI)
         end
     end
     for CurrentTimeSection = 0
-        STOmega_tar = SpElemProperties.SpP.FirstSTOmegaIdx(SpSIdx);
+        STOmega_tar = SpElemProperties.SpP.FirstSTOmegaIdx(SpPIdx);
         STP_tar     = SpElemProperties.SpP.FirstSTPIdx(SpPIdx);
         D2(STOmega_tar,STP_tar) =  1;
     end
-    for CurrentTimeSection = 1:SpElemProperties.SpP.UpdNum(SpSIdx)
-        STOmega_tar = SpElemProperties.SpP.FirstSTOmegaIdx(SpSIdx)+CurrentTimeSection;
+    for CurrentTimeSection = 1:SpElemProperties.SpP.UpdNum(SpPIdx)
+        STOmega_tar = SpElemProperties.SpP.FirstSTOmegaIdx(SpPIdx)+CurrentTimeSection;
         STP_tar     = SpElemProperties.SpP.FirstSTPIdx(SpPIdx)+CurrentTimeSection-1;
         D2(STOmega_tar,STP_tar) = -1;
         STP_tar     = SpElemProperties.SpP.FirstSTPIdx(SpPIdx)+CurrentTimeSection;
@@ -91,14 +91,14 @@ for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI)
     end
 end
 for SpSIdx = find(SpElemProperties.SpS.Belong_to_ST_FI)
-    for IncSpPIdx = find(sC(:,SpSIdx))
+    for IncSpPIdx = find(sC(:,SpSIdx)).'
         UpdRatio = SpElemProperties.SpS.UpdNum(SpSIdx)/SpElemProperties.SpP.UpdNum(IncSpPIdx);
         for CurrentTimeSection = 0
             STOmega_tar = SpElemProperties.SpP.FirstSTOmegaIdx(IncSpPIdx);
             STP_tar     = SpElemProperties.SpS.FirstSTPIdx(SpSIdx);
             D2(STOmega_tar,STP_tar) =  sC(IncSpPIdx,SpSIdx);
         end
-        for CurrentTimeSection = 1:SpElemProperties.SpP.UpdNum(SpSIdx)
+        for CurrentTimeSection = 1:SpElemProperties.SpP.UpdNum(SpPIdx)
             for LocalTimeSec_for_SpS = 1:UpdRatio
                 STOmega_tar = SpElemProperties.SpP.FirstSTOmegaIdx(IncSpPIdx)+CurrentTimeSection;
                 STP_tar     = SpElemProperties.SpS.FirstSTPIdx(SpSIdx)+LocalTimeSec_for_SpS+UpdRatio*(CurrentTimeSection-1);
@@ -110,7 +110,7 @@ end
 
 %% D3
 for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI)
-    for IncSpVIdx = find(sD(:,SpPIdx))
+    for IncSpVIdx = find(sD(:,SpPIdx)).'
         UpdRatio = SpElemProperties.SpP.UpdNum(SpPIdx)/SpElemProperties.SpV.UpdNum(IncSpVIdx);
         for CurrentTimeSection = 0
              STV_tar     = SpElemProperties.SpV.FirstSTVIdx(IncSpVIdx);

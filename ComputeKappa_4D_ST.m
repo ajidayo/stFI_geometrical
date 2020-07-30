@@ -1,17 +1,19 @@
 function [kappa,FaceArea] = ComputeKappa_4D_ST(cdt,sG,sC,sD,D0,D1,D2,D3,NodePos,SpElemProperties,Num_of_Elem)
-global SpDIM EPSILON
+global SpDIM
 kappa = zeros(Num_of_Elem.STP,1);
 
 FaceArea.Prim = zeros(Num_of_Elem.SpP,1);
 FaceArea.Dual = zeros(Num_of_Elem.SpS,1);
-DeltaPrimNodePos  = sparse(SpDIM, Num_of_Elem.STN);
+DeltaSTNPos   = sparse(SpDIM, Num_of_Elem.STN);
+[kappa,FaceArea] = ComputeKappa_for_STFI_SpPs_and_SpSs(kappa,FaceArea,DeltaSTNPos,cdt,sG,sC,sD,D0,D1,NodePos,SpElemProperties);
 disp('call ComputeKappa_for_SpFI_SpSs')
 [kappa,FaceArea.Dual]   = ComputeKappa_for_SpFI_SpSs(kappa,FaceArea.Prim,cdt,sG,sC,sD,NodePos,SpElemProperties);
 disp('call ComputeKappa_for_SpFI_SpPs')
 [kappa,FaceArea.Prim]   = ComputeKappa_for_SpFI_SpPs(kappa,FaceArea.Dual,cdt,sG,sC,sD,NodePos,SpElemProperties);
 end
 %%
-function [kappa,FaceArea] = ComputeKappa_for_STFI_SpPs_and_SpSs(kappa,FaceArea,cdt,sG,sC,sD,NodePos,SpElemProperties)
+function [kappa,FaceArea] = ComputeKappa_for_STFI_SpPs_and_SpSs(kappa,FaceArea,DeltaSTNPos,cdt,sG,sC,sD,D0,D1,NodePos,SpElemProperties)
+
 for SpSIdx = find(SpElemProperties.SpS.UpdNumBoundary==true)
     if SpElemProperties.SpS.PEC(SpSIdx) == true
         for STPIdx = SpElemProperties.SpS.FirstSTPIdx(SpSIdx):...
@@ -28,7 +30,7 @@ for SpSIdx = find(SpElemProperties.SpS.UpdNumBoundary==true)
         Area_PrimSTP = PrimEdgeTgtLeng*cdt/SpElemProperties.SpS.UpdNum(SpSIdx);
         Area_DualSTP = DualFaceTgtArea;
         for STPIdx = SpElemProperties.SpS.FirstSTPIdx(SpSIdx):...
-                SpElemProperties.SpS.FirstSTPIdx(SpSIdx)+SpElemProperties.SpS.UpdNum
+                SpElemProperties.SpS.FirstSTPIdx(SpSIdx)+SpElemProperties.SpS.UpdNum(SpSIdx)
             kappa(STPIdx) = -1*Area_DualSTP/Area_PrimSTP;
         end
         FaceArea.Dual(SpSIdx) = Area_DualSTP;
@@ -49,7 +51,7 @@ for SpSIdx = find(SpElemProperties.SpS.Belong_to_ST_FI==true)
         continue;
     end
     [kappa, FaceArea.Dual] = ...
-        ComputeKappa_for_SingleNonBoundarySpP(kappa,SpSIdx,sG,sC,sD,NodePos,SpElemProperties);
+        ComputeKappa_for_SingleNonBoundarySpS(kappa,SpSIdx,sG,sC,sD,NodePos,SpElemProperties);
 end
 
 for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI == true)
@@ -61,7 +63,23 @@ for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI == true)
         FaceArea.Prim(SpPIdx) = 1;
         continue;
     end
-    
+    DualEdgeTgtLeng = norm(sD(:,SpPIdx).'*NodePos.Dual);
+    Area_DualSTP = DualEdgeTgtLeng*cdt/SpElemProperties.SpP.UpdNum(SpPIdx);
+    for STPIdx = SpElemProperties.SpP.FirstSTPIdx(SpPIdx):...
+            SpElemProperties.SpP.FirstSTPIdx(SpPIdx)+SpElemProperties.SpP.UpdNum(SpPIdx)
+        STNIdx_DefPrimFace = find(logical(D1(STPIdx,:))*logical(D0));
+        STNIdx_DefPrimFace = SortSTNs_Along_with_FaceOrientation(STNIdx_DefPrimFace,STPIdx,D0   ,D1   );
+        PosVec_SpatialPart = zeros(2,size(STNIdx_DefPrimFace,2));
+        ColIdx = 0;
+        for STNIdx = STNIdx_DefPrimFace
+            ColIdx = ColIdx +1;
+            SpNIdxTemp              = STElemProperties.STN.RefSpN(STNIdx);
+            PosVec_SpatialPart(:,ColIdx) = NodePos.Prim(SpNIdxTemp) + DeltaSTNPos(:,STNIdx);
+        end
+        Area_PrimSTP  = norm(VectorArea3D(PosVec_SpatialPart));        
+        kappa(STPIdx) = Area_DualSTP/Area_PrimSTP;
+    end
+    FaceArea.Prim(SpPIdx) = Area_PrimSTP;
 end
 end
 %%
@@ -164,8 +182,24 @@ for TriDivIdx = 1:Num_of_TriangleDivision
     Vec1 = Vec1 + Vec2;
     Vec2 = NodePos2D(:,1) - Pos0;
     NodePos2D(:,1) = [];
-    TriangleArea_Signed = 0.5 * Vec1.'*[0 1;-1 0]*Vec2;
-    AreaReturn = AreaReturn + TriangleArea_Signed;
+    TriDivArea_Signed = 0.5 * Vec1.'*[0 1;-1 0]*Vec2;
+    AreaReturn = AreaReturn + TriDivArea_Signed;
+end
+end
+%%
+function AreaReturn_Vec = VectorArea3D(NodePos3D)
+Pos0 = NodePos3D(:,1);
+Vec1 = zeros('like',Pos0);
+Vec2 = NodePos3D(:,2) - NodePos3D(:,1);
+NodePos3D(:,1:2) = [];
+Num_of_TriangleDivision = size(NodePos3D,2);
+AreaReturn_Vec = [0;0;0];
+for TriDivIdx = 1:Num_of_TriangleDivision
+    Vec1 = Vec1 + Vec2;
+    Vec2 = NodePos3D(:,1) - Pos0;
+    NodePos3D(:,1) = [];
+    TriDivArea_Signed = 0.5 * cross(Vec1,Vec2);
+    AreaReturn_Vec = AreaReturn_Vec + TriDivArea_Signed;
 end
 end
 
@@ -217,10 +251,7 @@ end
 end
 
 %%
-function [kappa, FaceAreaPrim] = ...
-    ComputeKappa_for_SingleNonBoundarySpP(kappa,SpPTgt,sG,sC,D2,D3,NodePos,SpElemProperties)
 
-end
 %%
 function [kappa,FaceAreaPrim] = ComputeKappa_for_SpFI_SpPs(kappa,FaceAreaPrim,cdt,sG,sC,sD,NodePos,SpElemProperties)
 for SpPIdx = find(SpElemProperties.SpP.Belong_to_ST_FI==false)
@@ -315,8 +346,8 @@ for TriDivIdx = 1:Num_of_TriangleDivision
             break;
         end
     end
-    TriangleArea_Signed = 0.5*norm(cross(Vec1,Vec2));
-    FaceArea_Signed = FaceArea_Signed + TriangleArea_Signed;
+    TriDivArea = 0.5*norm(cross(Vec1,Vec2));
+    FaceArea_Signed = FaceArea_Signed + TriDivArea;
 end
 Area_3DFace = abs(FaceArea_Signed);
 end

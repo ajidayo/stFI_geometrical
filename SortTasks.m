@@ -3,7 +3,7 @@ function TaskOrder = SortTasks(TaskDepGraph,Map_SpElem_to_FirstGlobTask,sC,SpEle
 %% add edges to task dependency graph: Dependencies between SpFI tasks and STFI tasks
 EdgeIdx =0;
 for SpSIdx = find(SpElemProperties.SpS.Belong_to_ST_FI)
-    SpFI_RegionIdx = max(SpElemProperties.SpP.SpFI_TaskIdx(find(sC(:,SpSIdx))));
+    SpFI_RegionIdx = max(SpElemProperties.SpP.SpFI_TaskIdx(logical(sC(:,SpSIdx)).'));
     if SpFI_RegionIdx > 0
         for CurrentTimeSec = 1:SpElemProperties.SpS.UpdNum(SpSIdx)
             EdgeIdx = EdgeIdx+1;
