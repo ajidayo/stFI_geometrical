@@ -1,4 +1,5 @@
 clear;
+
 global SpDIM EPSILON
 SpDIM   = 3;
 EPSILON = 10^(-7);
